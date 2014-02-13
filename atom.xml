@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[I. KIT. WEB]]></title>
-  <link href="http://www.ikitweb.com/atom.xml" rel="self"/>
-  <link href="http://www.ikitweb.com/"/>
-  <updated>2014-02-13T19:15:47+08:00</updated>
-  <id>http://www.ikitweb.com/</id>
+  <title><![CDATA[I. KIT > WEB]]></title>
+  <link href="http://honwsn.github.io/atom.xml" rel="self"/>
+  <link href="http://honwsn.github.io/"/>
+  <updated>2014-02-13T23:28:43+08:00</updated>
+  <id>http://honwsn.github.io/</id>
   <author>
     <name><![CDATA[ianwang]]></name>
     

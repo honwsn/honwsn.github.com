@@ -1,4 +1,4 @@
 User-agent: *
 Disallow: 
 
-Sitemap: http://www.ikitweb.com/sitemap.xml 
+Sitemap: http://honwsn.github.io/sitemap.xml 
