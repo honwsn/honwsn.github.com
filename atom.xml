@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[I. KIT > WEB]]></title>
+  <title><![CDATA[I. KIT. WEB]]></title>
   <link href="http://www.ikitweb.com/atom.xml" rel="self"/>
   <link href="http://www.ikitweb.com/"/>
-  <updated>2014-02-13T23:36:15+08:00</updated>
+  <updated>2014-02-14T00:02:07+08:00</updated>
   <id>http://www.ikitweb.com/</id>
   <author>
     <name><![CDATA[ianwang]]></name>
