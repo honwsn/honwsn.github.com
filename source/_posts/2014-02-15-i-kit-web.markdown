@@ -17,7 +17,7 @@ categories:
 - browser rendering technical
 - mobile network optmize.
 
-i kit web,so my blog focus on web relatvie development. mobile browser,mobile web page ,mobile site architecture.mobile app. 
+I kit web,so my blog focus on web relatvie development. mobile browser,mobile web page ,mobile site architecture.mobile app. 
   
 ###*let's kit mobile world!*
 
