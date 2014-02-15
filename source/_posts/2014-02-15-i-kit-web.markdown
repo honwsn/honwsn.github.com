@@ -1,0 +1,24 @@
+---
+layout: post
+title: "Start from I kit web"
+date: 2014-02-15 12:50:49 +0800
+comments: true
+categories: 
+---
+
+ This is **ianwang**'s blog. Why site's domian name is <http://www.ikitweb.com> ?  
+ it means "i kit web" from words. "kitweb",reverse it would be [webkit](http://www.webkit.org),yes,webkit is my work areas.  
+![webkit log](http://www.webkit.org/images/icon-gold.png)  
+<!--more-->
+ In recent years,I'm majoring in mobile browser development in **Tencent**, **webkit** is our rendering engine, my work is optimize webkit for mobile platform, such as page rendering and moblile network optmize,etc. so I'll mainly talk about these, include followings:
+
+- webkit & blink research in mobile platform
+- mobile app development 
+- browser rendering technical
+- mobile network optmize.
+
+i kit web,so my blog focus on web relatvie development. mobile browser,mobile web page ,mobile site architecture.mobile app. 
+  
+###*let's kit mobile world!*
+
+
