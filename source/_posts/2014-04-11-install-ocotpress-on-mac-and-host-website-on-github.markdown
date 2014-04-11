@@ -169,7 +169,16 @@ ruby1.9.3是安装在～/.rvm/gems下, `rvm use 1.9.3`需要加上`--default`,�
 
 
 
-[参考] [像黑客一样写博客](http://blog.csdn.net/jackystudio/article/details/16367937)
+[参考] 
+
+- [像黑客一样写博客](http://blog.csdn.net/jackystudio/article/details/16367937)
+- [Install Octopress on Mac Mavericks Using RVM](http://www.pcdailytips.com/install-octopress-on-mac-mavericks-using-rvm/)
+- [How to Install Xcode, Homebrew, Git, RVM, Ruby & Rails on Snow Leopard, Lion, and Mountain Lion](http://www.moncefbelyamani.com/how-to-install-xcode-homebrew-git-rvm-ruby-on-mac/)
+- [Octopress Setup](http://octopress.org/docs/setup/)
+- [How to Install & Configure Octopress on a Mac, and 
+Host Your Static Website on Amazon S3](http://www.moncefbelyamani.com/how-to-install-and-configure-octopress-on-a-mac/)
+- [How I Install Homebrew on Mavericks Mac OS](http://www.pcdailytips.com/how-i-install-homebrew-on-mavericks-mac-os/)
+
 
 
 
