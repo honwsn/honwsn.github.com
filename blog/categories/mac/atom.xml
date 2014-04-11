@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[I. KIT. WEB]]></title>
-  <link href="http://www.ikitweb.com/atom.xml" rel="self"/>
+  <title><![CDATA[Category: Mac | I. KIT. WEB]]></title>
+  <link href="http://www.ikitweb.com/blog/categories/mac/atom.xml" rel="self"/>
   <link href="http://www.ikitweb.com/"/>
   <updated>2014-04-11T20:27:17+08:00</updated>
   <id>http://www.ikitweb.com/</id>
@@ -104,7 +104,7 @@ rake preview         //进入预览
 
 <p>在<a href="www.github.com">github</a>注册登录之后，建立版本仓库，Reposity name必须是username.github.com，这样的格式(username可以是任何名称),这里是<a href="http://blog.csdn.net/jackystudio/article/details/16334861">参考</a></p>
 
-<p><img class="center" src="http://www.ikitweb.com/images/2014-4/addrepos.png"></p>
+<p><img class="center" src="/images/2014-4/addrepos.png"></p>
 
 <h3>七. git与github打通</h3>
 
@@ -113,27 +113,27 @@ rake preview         //进入预览
 <ol>
 <li><p>ssh生成密钥得方法</p>
 
-<blockquote><p>ssh-keygen -t rsa -C &ldquo;<a href="&#109;&#97;&#x69;&#108;&#116;&#111;&#58;&#89;&#111;&#x75;&#114;&#69;&#109;&#x61;&#105;&#108;&#x40;&#x65;&#120;&#97;&#x6d;&#x70;&#x6c;&#x65;&#x2e;&#x63;&#x6f;&#109;">&#89;&#111;&#117;&#x72;&#x45;&#x6d;&#x61;&#x69;&#108;&#64;&#101;&#120;&#x61;&#109;&#x70;&#x6c;&#x65;&#x2e;&#x63;&#111;&#109;</a>&rdquo;</p></blockquote></li>
+<blockquote><p>ssh-keygen -t rsa -C &ldquo;<a href="&#109;&#x61;&#x69;&#108;&#116;&#111;&#58;&#89;&#111;&#x75;&#x72;&#x45;&#x6d;&#x61;&#x69;&#x6c;&#64;&#101;&#x78;&#97;&#x6d;&#112;&#x6c;&#x65;&#x2e;&#99;&#111;&#x6d;">&#89;&#111;&#117;&#114;&#x45;&#109;&#97;&#x69;&#108;&#x40;&#x65;&#120;&#97;&#109;&#112;&#108;&#x65;&#x2e;&#x63;&#111;&#x6d;</a>&rdquo;</p></blockquote></li>
 </ol>
 
 
-<p><img class="center" src="http://www.ikitweb.com/images/2014-4/sshkeygen.png" width="700" height="300"></p>
+<p><img class="center" src="/images/2014-4/sshkeygen.png" width="700" height="300"></p>
 
 <p>结果在～/.ssh下,id_rsa.pub就是公钥
-<img class="center" src="http://www.ikitweb.com/images/2014-4/idrsa_pub.png"></p>
+<img class="center" src="/images/2014-4/idrsa_pub.png"></p>
 
 <ol>
 <li><p>把公钥给github。
 登录github－>右上角accout settings->SSH keys->add SSH key.把id_rsa.pub得内容复制粘贴，Title随意。
-<img class="center" src="http://www.ikitweb.com/images/2014-4/addshhkey.png"></p></li>
+<img class="center" src="/images/2014-4/addshhkey.png"></p></li>
 <li><p>客户端验证与github是否打通</p></li>
 </ol>
 
 
-<blockquote><p>ssh -T <a href="&#x6d;&#x61;&#105;&#108;&#116;&#x6f;&#x3a;&#x67;&#105;&#x74;&#64;&#x67;&#105;&#x74;&#104;&#x75;&#98;&#x2e;&#x63;&#111;&#x6d;">&#103;&#x69;&#x74;&#x40;&#103;&#105;&#116;&#x68;&#x75;&#x62;&#x2e;&#99;&#x6f;&#x6d;</a></p></blockquote>
+<blockquote><p>ssh -T <a href="&#x6d;&#97;&#105;&#x6c;&#x74;&#x6f;&#58;&#103;&#105;&#x74;&#64;&#103;&#105;&#116;&#x68;&#117;&#x62;&#x2e;&#99;&#111;&#109;">&#103;&#105;&#x74;&#64;&#103;&#105;&#x74;&#104;&#117;&#98;&#x2e;&#x63;&#x6f;&#109;</a></p></blockquote>
 
 <p>我得得到如下结果:
-<img class="center" src="http://www.ikitweb.com/images/2014-4/ssht.png"></p>
+<img class="center" src="/images/2014-4/ssht.png"></p>
 
 <h3>八. 把Octopress博客发布到github</h3>
 
@@ -160,7 +160,7 @@ rake preview         //进入预览
 </ol>
 
 
-<p><img class="center" src="http://www.ikitweb.com/images/2014-4/setup_github_pages.png"></p>
+<p><img class="center" src="/images/2014-4/setup_github_pages.png"></p>
 
 <p><strong>发布博客：</strong></p>
 
@@ -201,43 +201,15 @@ git push origin source
 所以才采用git remote add 以及git pull origin source等等。这里由<a href="http://stackoverflow.com/questions/4855561/difference-between-git-remote-add-and-git-clone">stackOverflow的解释</a>。　</p>
 
 <p>下面是我操作过程的截图:
-<img class="center" src="http://www.ikitweb.com/images/2014-4/cloneblog1.png">
+<img class="center" src="/images/2014-4/cloneblog1.png">
 还有一点:
-<img class="center" src="http://www.ikitweb.com/images/2014-4/cloneblog2.png"></p>
+<img class="center" src="/images/2014-4/cloneblog2.png"></p>
 
 <h3>十. Octopress目录分析</h3>
 
 <p>这个放到下一篇了。。。。先到这里</p>
 
 <p>[参考] <a href="http://blog.csdn.net/jackystudio/article/details/16367937">像黑客一样写博客</a></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Start From I Kit Web]]></title>
-    <link href="http://www.ikitweb.com/blog/2014/02/15/i-kit-web/"/>
-    <updated>2014-02-15T12:50:49+08:00</updated>
-    <id>http://www.ikitweb.com/blog/2014/02/15/i-kit-web</id>
-    <content type="html"><![CDATA[<p> This is <strong>ianwang</strong>&rsquo;s blog. Why site&rsquo;s domian name is <a href="http://www.ikitweb.com">http://www.ikitweb.com</a> ?<br/>
- it means &ldquo;i kit web&rdquo; from words. &ldquo;kitweb&rdquo;,reverse it would be <a href="http://www.webkit.org">webkit</a>,yes,webkit is my work areas.<br/>
-<img src="http://www.webkit.org/images/icon-gold.png" alt="webkit log" /></p>
-
-<!--more-->
-
-
-<p> In recent years,I&rsquo;m majoring in mobile browser development in <strong>Tencent</strong>, <strong>webkit</strong> is our rendering engine, my work is optimize webkit for mobile platform, such as page rendering and moblile network optmize,etc. so I&rsquo;ll mainly talk about these, include followings:</p>
-
-<ul>
-<li>webkit &amp; blink research in mobile platform</li>
-<li>mobile app development</li>
-<li>browser rendering technical</li>
-<li>mobile network optmize.</li>
-</ul>
-
-
-<p>I kit web,so my blog focus on web relatvie development. mobile browser,mobile web page ,mobile site architecture.mobile app.</p>
-
-<h3><em>let&rsquo;s kit mobile world!</em></h3>
 ]]></content>
   </entry>
   

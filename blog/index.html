@@ -9,7 +9,7 @@
   <meta name="author" content="ianwang">
 
   
-  <meta name="description" content="Start from I kit web Feb 15th, 2014 This is ianwang&rsquo;s blog. Why site&rsquo;s domian name is http://www.ikitweb.com ? it means &ldquo;i kit web &hellip;">
+  <meta name="description" content="在Mac OSX 10.9搭建Github/Octopress博客 Apr 11th, 2014 Octopress github mac Octopress需要ruby 1.9.3，而我mac系统安装的ruby是2.1的，此外Octopress还需要bundle安装自己的依赖gem包。 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -65,6 +65,76 @@
     <div id="content">
       
 
+
+  
+  <article class="listing">
+    <header>
+  
+  <h1 class="beta">
+    <a href="/blog/2014/04/11/install-ocotpress-on-mac-and-host-website-on-github/">在Mac OSX 10.9搭建Github/Octopress博客</a>
+  </h1>
+  
+
+  
+  <div class="meta clearfix">
+    
+
+
+
+
+
+
+
+
+  
+
+
+<time class="pull-left" datetime="2014-04-11T19:03:24+08:00" pubdate data-updated="true"><i class="icon-calendar"></i> Apr 11<span>th</span>, 2014</time>
+    
+
+
+
+  
+  <div class="pull-left">
+    <i class="icon-tags"></i>
+    <ul class="tags unstyled">
+    
+      <li><a href="/blog/categories/Octopress/">Octopress</a></li>
+    
+      <li><a href="/blog/categories/github/">github</a></li>
+    
+      <li><a href="/blog/categories/mac/">mac</a></li>
+    
+    </ul>
+  </div>
+  
+
+    
+  </div>
+  
+</header>
+
+
+
+
+<div class="entry-content clearfix">
+  <p>  <em>Octopress</em>需要<strong>ruby 1.9.3</strong>，而我mac系统安装的ruby是2.1的，此外Octopress还需要bundle安装自己的依赖gem包。一开始我想着直接用mac上ruby2.1，结果在执行<code>gem install bundle</code>时，发现之下的错误：</p>
+
+<blockquote><p>ERROR:  While executing gem &hellip; >(Gem::FilePermissionError)
+You don&rsquo;t have write permissions for the /Library/Ruby/>Gems/2.1.0 directory.</p></blockquote>
+
+<p>这个提示的意思：</p>
+
+<blockquote><p>You don&rsquo;t have write permissions into the /Library/Ruby/Gems/2.1.0 directory.</p></blockquote>
+
+<p>这是OSX自己安装的ruby版本，不允许自行安装其他的安装包。stackOverFlow有相关<a href="http://stackoverflow.com/questions/14607193/installing-gem-or-updating-rubygems-fails-with-permissions-error">说明</a>,所以我又回到老路上－》<strong>安装ruby1.9.3</strong>,下面是过程：</p>
+
+
+  <a class="btn pull-right" href="/blog/2014/04/11/install-ocotpress-on-mac-and-host-website-on-github/">Read on &rarr;</a>
+</div>
+
+  </article>
+  <hr>
 
   
   <article class="listing">
