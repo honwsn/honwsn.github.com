@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[I. KIT. WEB]]></title>
+  <link href="http://www.ikitweb.com/atom.xml" rel="self"/>
+  <link href="http://www.ikitweb.com/"/>
+  <updated>2014-04-11T11:05:16+08:00</updated>
+  <id>http://www.ikitweb.com/</id>
+  <author>
+    <name><![CDATA[ianwang]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Start From I Kit Web]]></title>
+    <link href="http://www.ikitweb.com/blog/2014/02/15/i-kit-web/"/>
+    <updated>2014-02-15T12:50:49+08:00</updated>
+    <id>http://www.ikitweb.com/blog/2014/02/15/i-kit-web</id>
+    <content type="html"><![CDATA[<p> This is <strong>ianwang</strong>&rsquo;s blog. Why site&rsquo;s domian name is <a href="http://www.ikitweb.com">http://www.ikitweb.com</a> ?<br/>
+ it means &ldquo;i kit web&rdquo; from words. &ldquo;kitweb&rdquo;,reverse it would be <a href="http://www.webkit.org">webkit</a>,yes,webkit is my work areas.<br/>
+<img src="http://www.webkit.org/images/icon-gold.png" alt="webkit log" /></p>
+
+<!--more-->
+
+
+<p> In recent years,I&rsquo;m majoring in mobile browser development in <strong>Tencent</strong>, <strong>webkit</strong> is our rendering engine, my work is optimize webkit for mobile platform, such as page rendering and moblile network optmize,etc. so I&rsquo;ll mainly talk about these, include followings:</p>
+
+<ul>
+<li>webkit &amp; blink research in mobile platform</li>
+<li>mobile app development</li>
+<li>browser rendering technical</li>
+<li>mobile network optmize.</li>
+</ul>
+
+
+<p>I kit web,so my blog focus on web relatvie development. mobile browser,mobile web page ,mobile site architecture.mobile app.</p>
+
+<h3><em>let&rsquo;s kit mobile world!</em></h3>
+]]></content>
+  </entry>
+  
+</feed>
