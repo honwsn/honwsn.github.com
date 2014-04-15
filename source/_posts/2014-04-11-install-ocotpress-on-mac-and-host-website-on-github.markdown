@@ -15,7 +15,7 @@ categories: github Octopress mac
 
 这是OSX自己安装的ruby版本，不允许自行安装其他的安装包。stackOverFlow有相关[说明](http://stackoverflow.com/questions/14607193/installing-gem-or-updating-rubygems-fails-with-permissions-error),所以我又回到老路上－》**安装ruby1.9.3**,下面是过程：
 <!--more-->
-#一. 更新安装Xcode command line tools
+### 一. 更新安装Xcode command line tools
 xcode-tools所在目录安装的目录`/library/developer/CommandLineTools`
 
 安装方法有两种:
