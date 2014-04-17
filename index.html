@@ -9,7 +9,11 @@
   <meta name="author" content="ianwang">
 
   
-  <meta name="description" content="Octopress需要ruby 1.9.3，而我mac系统安装的ruby是2.1的，此外Octopress还需要bundle安装自己的依赖gem包。一开始我想着直接用mac上ruby2.1，结果在执行gem install bundle时，发现之下的错误： ERROR: While &hellip;">
+  <meta name="description" content="一. 实现一个有消息队列的线程 大概有以下接口： 添加任务到消息队列: addTask
+从消息队列中获取任务: popTask
+执行这个任务
+要实现一个线程的循环体:threadRunloop. 上述操作是在多个线程中执行的，例如addTask可以由任何一个线程执行。
+而popTask， &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -65,6 +69,62 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/04/16/about-thread-message-queue-design/">关于线程消息队列的设计</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-04-16T19:35:20+08:00" pubdate data-updated="true">Apr 16<span>th</span>, 2014</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h3>一. 实现一个有消息队列的线程</h3>
+
+<p>大概有以下接口：</p>
+
+<ul>
+<li>添加任务到消息队列: addTask</li>
+<li>从消息队列中获取任务: popTask</li>
+<li>执行这个任务</li>
+<li>要实现一个线程的循环体:threadRunloop.</li>
+</ul>
+
+
+<p>上述操作是在多个线程中执行的，例如addTask可以由任何一个线程执行。
+而popTask，threadRunloop只在当前线程执行。</p>
+
+<p>MessageQueue的实现重要的一点：<strong>要保证对消息队列操作的同步和互斥</strong>.在linux中，就涉及到两个技术点取实现，一个是互斥变量Mute，一个是信号量Condition:</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/04/16/about-thread-message-queue-design/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -170,6 +230,10 @@ You don&rsquo;t have write permissions for the /Library/Ruby/>Gems/2.1.0 directo
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/04/16/about-thread-message-queue-design/">关于线程消息队列的设计</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2014/04/11/install-ocotpress-on-mac-and-host-website-on-github/">在Mac OSX 10.9搭建Github/Octopress博客</a>

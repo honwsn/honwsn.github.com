@@ -4,7 +4,7 @@
   <title><![CDATA[I. KIT. WEB]]></title>
   <link href="http://www.ikitweb.com/atom.xml" rel="self"/>
   <link href="http://www.ikitweb.com/"/>
-  <updated>2014-04-15T10:11:40+08:00</updated>
+  <updated>2014-04-17T15:56:37+08:00</updated>
   <id>http://www.ikitweb.com/</id>
   <author>
     <name><![CDATA[ianwang]]></name>
@@ -12,6 +12,244 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[关于线程消息队列的设计]]></title>
+    <link href="http://www.ikitweb.com/blog/2014/04/16/about-thread-message-queue-design/"/>
+    <updated>2014-04-16T19:35:20+08:00</updated>
+    <id>http://www.ikitweb.com/blog/2014/04/16/about-thread-message-queue-design</id>
+    <content type="html"><![CDATA[<h3>一. 实现一个有消息队列的线程</h3>
+
+<p>大概有以下接口：</p>
+
+<ul>
+<li>添加任务到消息队列: addTask</li>
+<li>从消息队列中获取任务: popTask</li>
+<li>执行这个任务</li>
+<li>要实现一个线程的循环体:threadRunloop.</li>
+</ul>
+
+
+<p>上述操作是在多个线程中执行的，例如addTask可以由任何一个线程执行。
+而popTask，threadRunloop只在当前线程执行。</p>
+
+<p>MessageQueue的实现重要的一点：<strong>要保证对消息队列操作的同步和互斥</strong>.在linux中，就涉及到两个技术点取实现，一个是互斥变量Mute，一个是信号量Condition:</p>
+
+<!--more-->
+
+
+<p>下面是伪代码：</p>
+
+<pre><code>class loopThread:public Thread{
+public:
+    void addTask(Task * task,bool needSignal);
+    Task * popTask();
+private:
+    void threadRunloop();
+    MessageQueue taskQueue;
+    Mutex operationsMutex;
+    Condition operationsCond;
+}
+
+void loopThread::addTask(Task * task,bool needSignal){
+    if(!task)
+        return;
+
+    operationsMutex.lock();
+    taskQueue.append(task);
+    operationsMutex.unLock();
+
+    if(needSignal){
+        operationsCond.signal();
+    }
+}
+
+Task * loopThread::popTask(){
+    Task * task = taskQueue.popTaskByPriority();
+    return task;
+}
+
+void loopThread::threadRunloop(){
+
+    Task * currentTask = null; 
+    //run tasks 
+    bool stop = false;
+    while(!stop){
+
+        operationsMutex.lock()
+
+        //1.check taskQueue have pending task or not
+        while(!taskQueue.size()){
+            //这里使用while而不是if，是因为有可能存在多个
+            loopThread线程都在等待，但唤醒后，
+            只能有一个线程进行下面的执行，导致条件发生改变，
+            所以其他线程在接着执行时，任务需要条件判断一次。
+            这就是所谓的“惊群效应”
+            operationsCond.wait（operationsMutex）
+        }
+
+        //2.get a task from queue
+
+        currentTask = popTask();
+
+        operationsMutex.unLock();
+
+        //3.excute this task;
+        if(task){
+            task-&gt;run();
+        }
+    }
+}
+</code></pre>
+
+<h3>二. 互斥变量Mutex和条件变量Condition的使用场景</h3>
+
+<p>mutex和condition对象主要是pthread接口的封装，最终调用的POSIX api 如下：</p>
+
+<pre><code>//1.Mutex   
+pthread_mutex_init  
+pthread_mutex_lock  
+pthread_mutex_trylock  
+pthread_mutex_unlock
+ThreadCondition 
+//2.条件等待:  
+pthread_cond_init  
+pthread_cond_wait(&amp;conidtion,&amp;mutex);  
+phtread_cond_timewait  
+phtread_cond_signal
+</code></pre>
+
+<h4>1. pthread_cond_wait()的使用过程说明</h4>
+
+<pre><code>pthread_mutex_lock(&amp;mutex);
+//对临界资源的操作 
+pthread_cond_wait(&amp;cond, &amp;mutex);
+//对临界资源的操作 
+pthread_mutex_unlock(&amp;mutex);
+</code></pre>
+
+<p>上面的代码<strong>锁</strong>的变化流程如下 :</p>
+
+<p>mutex.lock()&ndash;><strong>mutext.unlock()&mdash;>mutex.lock()</strong>&mdash;>mutext.unlock()</p>
+
+<p>中间两步是在<code>pthread_cond_wait</code>中完成的。pthread_cond_wait把当前线程<strong>放入阻塞队列后</strong>，会进行一个<strong>mutex unlock</strong>释放锁，此后其他线程就可以访问临界资源了,例如这个临界资源可能是一个任务队列(也可是是其他条件变量)，其他线程就可以往任务队列里面添加新的任务。此时当前thread处于wait状态等待条件cond发生改变。当其他线程添加任务到队列后就会进行唤醒操作，<code>phtread_cond_signal(&amp;cond)</code>就唤醒了当前线程，当前线程在<strong>pthread_cond_wait返回前</strong>，里面会进行一个mutex lock操作以重新获取锁。</p>
+
+<h4>2. pthread_cond_wait()存在的“惊群效应”</h4>
+
+<p>当有多个线程处于pthread_cond_wait等同一个cond时，当cond条件满足时，这个多个线程都可能被唤醒，但只有其中一个线程得到了锁（得到下面临界资源的执行权限)，其他线程等待。当该线程执行完毕后，临界资源的执行条件可能发生了改变（例如上述任务队列为空了），此时其他线程要往下执行的话需要再次判断条件，这里就使用了<code>while</code>循环。</p>
+
+<pre><code>pthread_mutex_lock(&amp;mutex);
+while(临界资源条件不满足){
+pthread_cond_wait(&amp;cond,&amp;mutex);
+}
+....
+..对临界资源的操作
+....
+phtread_mutext_unlock(&amp;mutex);  
+</code></pre>
+
+<p>可以参考<a href="http://hi.baidu.com/yangyangye2008/item/454628450f8f7890833ae1a8">这里</a></p>
+
+<h3>三. 存在消息队列线程的使用案例</h3>
+
+<h4>1. thread线程类对外提供proxy接口</h4>
+
+<p>在thread线程类接口供外部使用时，建立一个ThreadProxy是一个良好的方式。</p>
+
+<p>下面可以停止某个外部对象(就是个threadproxy)使用当前的thread。
+<code>m_mainThreadProxy-&gt;shutdown()</code></p>
+
+<p><a href="http://opensource.apple.com/source/WebCore/WebCore-1640.1/platform/graphics/chromium/cc/CCScopedThreadProxy.h">CCScopedThreadProxy</a></p>
+
+<pre>
+<code>
+#ifndef CCScopedThreadProxy_h
+#define CCScopedThreadProxy_h
+
+#include "cc/CCProxy.h"
+#include "cc/CCThreadTask.h"
+#include <wtf/ThreadSafeRefCounted.h>
+
+namespace WebCore {
+
+<span style="color:red"">// This class is a proxy used to post tasks to an target thread from any other thread. The proxy may be shut down at
+// any point from the target thread after which no more tasks posted to the proxy will run. In other words, all
+// tasks posted via a proxy are scoped to the lifecycle of the proxy. Use this when posting tasks to an object that
+// might die with tasks in flight.</span>
+//
+// The proxy must be created and shut down from the target thread, tasks may be posted from any thread.
+//
+// Implementation note: Unlike ScopedRunnableMethodFactory in Chromium, pending tasks are not cancelled by actually
+// destroying the proxy. Instead each pending task holds a reference to the proxy to avoid maintaining an explicit
+// list of outstanding tasks.
+class CCScopedThreadProxy : public ThreadSafeRefCounted<CCScopedThreadProxy> {
+public:
+    static PassRefPtr<CCScopedThreadProxy> create(CCThread* targetThread)
+    {
+        ASSERT(currentThread() == targetThread->threadID());
+        return adoptRef(new CCScopedThreadProxy(targetThread));
+    }
+    
+    // Can be called from any thread. Posts a task to the target thread that runs unless
+    // shutdown() is called before it runs.
+    void postTask(PassOwnPtr<CCThread::Task> task)
+    {
+        ref();
+        m_targetThread->postTask(createCCThreadTask(this, &CCScopedThreadProxy::runTaskIfNotShutdown, task));
+    }
+    
+    void shutdown()
+    {
+        ASSERT(currentThread() == m_targetThread->threadID());
+        ASSERT(!m_shutdown);
+        m_shutdown = true;
+    }
+
+private:
+    explicit CCScopedThreadProxy(CCThread* targetThread)
+        : m_targetThread(targetThread)
+        , m_shutdown(false) { }
+
+    void runTaskIfNotShutdown(PassOwnPtr<CCThread::Task> popTask)
+    {
+        OwnPtr<CCThread::Task> task = popTask;
+        // If our shutdown flag is set, it's possible that m_targetThread has already been destroyed so don't
+        // touch it.
+        if (m_shutdown) {
+            deref();
+            return;
+        }
+        ASSERT(currentThread() == m_targetThread->threadID());
+        task->performTask();
+        deref();
+    }
+
+    CCThread* m_targetThread;
+    bool m_shutdown; // Only accessed on the target thread
+};
+}
+#endif
+</code>
+</pre>
+
+
+<h4>2. 简单的线程队列案例:</h4>
+
+<ul>
+<li>chromium <a href="http://www.opensource.apple.com/source/WebCore/WebCore-1298.39/platform/graphics/chromium/cc/CCThread.cpp">CCThread</a></li>
+<li>android42 <a href="https://android.googlesource.com/platform/external/webkit/+/42326004062d6b846c3050ad03a1e80fa9db425c/Source/WebCore/platform/graphics/android/rendering/TexturesGenerator.cpp">webkit TexturesGenerator.cpp的实现</a></li>
+</ul>
+
+
+<h4>3. 参考</h4>
+
+<ul>
+<li>chromium <a href="https://gitorious.org/webkit-clutter/webkit-clutter/source/804b17d000553df4f01db334f97c9bd01e416716:Source/WebCore/platform/graphics/chromium/cc/CCThreadProxy.cpp#L82-348">CCThreadProxy</a></li>
+<li>chromium <a href="http://opensource.apple.com/source/WebCore/WebCore-1640.1/platform/graphics/chromium/cc/CCScopedThreadProxy.h">CCScopedThreadProxy</a></li>
+</ul>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[在Mac OSX 10.9搭建Github/Octopress博客]]></title>
@@ -113,7 +351,7 @@ rake preview         //进入预览
 <ol>
 <li><p>ssh生成密钥得方法</p>
 
-<blockquote><p>ssh-keygen -t rsa -C &ldquo;<a href="&#109;&#97;&#x69;&#108;&#116;&#111;&#58;&#89;&#111;&#117;&#x72;&#x45;&#x6d;&#x61;&#x69;&#108;&#x40;&#x65;&#x78;&#97;&#109;&#112;&#108;&#x65;&#46;&#99;&#x6f;&#x6d;">&#x59;&#111;&#117;&#x72;&#x45;&#x6d;&#x61;&#x69;&#x6c;&#64;&#x65;&#120;&#97;&#x6d;&#x70;&#x6c;&#101;&#46;&#x63;&#x6f;&#x6d;</a>&rdquo;</p></blockquote></li>
+<blockquote><p>ssh-keygen -t rsa -C &ldquo;<a href="&#x6d;&#x61;&#105;&#108;&#x74;&#x6f;&#58;&#89;&#x6f;&#x75;&#114;&#69;&#109;&#97;&#105;&#108;&#x40;&#101;&#120;&#x61;&#109;&#x70;&#108;&#101;&#46;&#x63;&#x6f;&#109;">&#x59;&#111;&#117;&#x72;&#x45;&#x6d;&#x61;&#x69;&#108;&#64;&#x65;&#x78;&#x61;&#x6d;&#112;&#x6c;&#x65;&#46;&#99;&#111;&#109;</a>&rdquo;</p></blockquote></li>
 </ol>
 
 
@@ -130,7 +368,7 @@ rake preview         //进入预览
 </ol>
 
 
-<blockquote><p>ssh -T <a href="&#x6d;&#x61;&#x69;&#x6c;&#x74;&#x6f;&#x3a;&#103;&#105;&#116;&#x40;&#x67;&#x69;&#116;&#104;&#117;&#x62;&#x2e;&#99;&#x6f;&#x6d;">&#103;&#105;&#116;&#x40;&#x67;&#105;&#x74;&#x68;&#x75;&#98;&#46;&#99;&#x6f;&#x6d;</a></p></blockquote>
+<blockquote><p>ssh -T <a href="&#109;&#x61;&#105;&#x6c;&#x74;&#111;&#x3a;&#103;&#x69;&#116;&#64;&#103;&#105;&#x74;&#x68;&#x75;&#98;&#46;&#99;&#111;&#x6d;">&#x67;&#105;&#116;&#x40;&#x67;&#x69;&#x74;&#x68;&#x75;&#x62;&#x2e;&#99;&#x6f;&#x6d;</a></p></blockquote>
 
 <p>我得得到如下结果:
 <img class="center" src="http://www.ikitweb.com/images/2014-4/ssht.png"></p>
