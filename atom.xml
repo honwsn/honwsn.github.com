@@ -4,7 +4,7 @@
   <title><![CDATA[I. KIT. WEB]]></title>
   <link href="http://www.ikitweb.com/atom.xml" rel="self"/>
   <link href="http://www.ikitweb.com/"/>
-  <updated>2014-04-17T16:53:26+08:00</updated>
+  <updated>2014-04-23T20:49:01+08:00</updated>
   <id>http://www.ikitweb.com/</id>
   <author>
     <name><![CDATA[ianwang]]></name>
@@ -115,8 +115,8 @@ ThreadCondition
 //2.条件等待:  
 pthread_cond_init  
 pthread_cond_wait(&amp;conidtion,&amp;mutex);  
-phtread_cond_timewait  
-phtread_cond_signal
+phtread_cond_timewait     
+phtread_cond_signal 
 </code></pre>
 
 <h4>1. pthread_cond_wait()的使用过程说明</h4>
@@ -156,81 +156,142 @@ phtread_mutext_unlock(&amp;mutex);
 
 <p>在thread线程类接口供外部使用时，建立一个ThreadProxy是一个良好的方式。</p>
 
-<p>下面可以停止某个外部对象(就是个threadproxy)使用当前的thread。
-<code>m_mainThreadProxy-&gt;shutdown()</code></p>
+<p><a href="http://opensource.apple.com/source/WebCore/WebCore-1640.1/platform/graphics/chromium/cc/CCScopedThreadProxy.h">CCScopedThreadProxy</a>的设计：线程API通过创建一个proxy给外部线程使用，但线程自己可以关闭这个使用。下面可以停止某个外部对象(就是个threadproxy)使用当前的thread。
+<code>CCScopedThreadProxy::shutdown()</code></p>
 
-<p><a href="http://opensource.apple.com/source/WebCore/WebCore-1640.1/platform/graphics/chromium/cc/CCScopedThreadProxy.h">CCScopedThreadProxy</a></p>
-
-<pre>
-<code>
-#ifndef CCScopedThreadProxy_h
-#define CCScopedThreadProxy_h
-
-#include "cc/CCProxy.h"
-#include "cc/CCThreadTask.h"
-#include <wtf/ThreadSafeRefCounted.h>
-
-namespace WebCore {
-
-<span style="color:red"">// This class is a proxy used to post tasks to an target thread from any other thread. The proxy may be shut down at
-// any point from the target thread after which no more tasks posted to the proxy will run. In other words, all
-// tasks posted via a proxy are scoped to the lifecycle of the proxy. Use this when posting tasks to an object that
-// might die with tasks in flight.</span>
-//
-// The proxy must be created and shut down from the target thread, tasks may be posted from any thread.
-//
-// Implementation note: Unlike ScopedRunnableMethodFactory in Chromium, pending tasks are not cancelled by actually
-// destroying the proxy. Instead each pending task holds a reference to the proxy to avoid maintaining an explicit
-// list of outstanding tasks.
-class CCScopedThreadProxy : public ThreadSafeRefCounted<CCScopedThreadProxy> {
-public:
-    static PassRefPtr<CCScopedThreadProxy> create(CCThread* targetThread)
-    {
-        ASSERT(currentThread() == targetThread->threadID());
-        return adoptRef(new CCScopedThreadProxy(targetThread));
-    }
-    
-    // Can be called from any thread. Posts a task to the target thread that runs unless
-    // shutdown() is called before it runs.
-    void postTask(PassOwnPtr<CCThread::Task> task)
-    {
-        ref();
-        m_targetThread->postTask(createCCThreadTask(this, &CCScopedThreadProxy::runTaskIfNotShutdown, task));
-    }
-    
-    void shutdown()
-    {
-        ASSERT(currentThread() == m_targetThread->threadID());
-        ASSERT(!m_shutdown);
-        m_shutdown = true;
-    }
-
-private:
-    explicit CCScopedThreadProxy(CCThread* targetThread)
-        : m_targetThread(targetThread)
-        , m_shutdown(false) { }
-
-    void runTaskIfNotShutdown(PassOwnPtr<CCThread::Task> popTask)
-    {
-        OwnPtr<CCThread::Task> task = popTask;
-        // If our shutdown flag is set, it's possible that m_targetThread has already been destroyed so don't
-        // touch it.
-        if (m_shutdown) {
-            deref();
-            return;
-        }
-        ASSERT(currentThread() == m_targetThread->threadID());
-        task->performTask();
-        deref();
-    }
-
-    CCThread* m_targetThread;
-    bool m_shutdown; // Only accessed on the target thread
-};
-}
-#endif
-</code>
-</pre>
+<figure class='code'><figcaption><span>CCScopedThreadProxy.h</span><a href='http://opensource.apple.com/source/WebCore/WebCore-1640.1/platform/graphics/chromium/cc/CCScopedThreadProxy.h'>link</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+</pre></td><td class='code'><pre><code class='cpp'><span class='line'><span class="cp">#ifndef CCScopedThreadProxy_h</span>
+</span><span class='line'><span class="cp">#define CCScopedThreadProxy_h</span>
+</span><span class='line'>
+</span><span class='line'><span class="cp">#include &quot;cc/CCProxy.h&quot;</span>
+</span><span class='line'><span class="cp">#include &quot;cc/CCThreadTask.h&quot;</span>
+</span><span class='line'><span class="cp">#include &lt;wtf/ThreadSafeRefCounted.h&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">namespace</span> <span class="n">WebCore</span> <span class="p">{</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// This class is a proxy used to post tasks to an target thread from any other thread. The proxy may be shut down at</span>
+</span><span class='line'><span class="c1">// any point from the target thread after which no more tasks posted to the proxy will run. In other words, all</span>
+</span><span class='line'><span class="c1">// tasks posted via a proxy are scoped to the lifecycle of the proxy. Use this when posting tasks to an object that</span>
+</span><span class='line'><span class="c1">// might die with tasks in flight.</span>
+</span><span class='line'><span class="c1">//</span>
+</span><span class='line'><span class="c1">// The proxy must be created and shut down from the target thread, tasks may be posted from any thread.</span>
+</span><span class='line'><span class="c1">//</span>
+</span><span class='line'><span class="c1">// Implementation note: Unlike ScopedRunnableMethodFactory in Chromium, pending tasks are not cancelled by actually</span>
+</span><span class='line'><span class="c1">// destroying the proxy. Instead each pending task holds a reference to the proxy to avoid maintaining an explicit</span>
+</span><span class='line'><span class="c1">// list of outstanding tasks.</span>
+</span><span class='line'><span class="k">class</span> <span class="nc">CCScopedThreadProxy</span> <span class="o">:</span> <span class="k">public</span> <span class="n">ThreadSafeRefCounted</span><span class="o">&lt;</span><span class="n">CCScopedThreadProxy</span><span class="o">&gt;</span> <span class="p">{</span>
+</span><span class='line'><span class="k">public</span><span class="o">:</span>
+</span><span class='line'>    <span class="k">static</span> <span class="n">PassRefPtr</span><span class="o">&lt;</span><span class="n">CCScopedThreadProxy</span><span class="o">&gt;</span> <span class="n">create</span><span class="p">(</span><span class="n">CCThread</span><span class="o">*</span> <span class="n">targetThread</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="n">ASSERT</span><span class="p">(</span><span class="n">currentThread</span><span class="p">()</span> <span class="o">==</span> <span class="n">targetThread</span><span class="o">-&gt;</span><span class="n">threadID</span><span class="p">());</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">adoptRef</span><span class="p">(</span><span class="k">new</span> <span class="n">CCScopedThreadProxy</span><span class="p">(</span><span class="n">targetThread</span><span class="p">));</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// Can be called from any thread. Posts a task to the target thread that runs unless</span>
+</span><span class='line'>    <span class="c1">// shutdown() is called before it runs.</span>
+</span><span class='line'>    <span class="kt">void</span> <span class="n">postTask</span><span class="p">(</span><span class="n">PassOwnPtr</span><span class="o">&lt;</span><span class="n">CCThread</span><span class="o">::</span><span class="n">Task</span><span class="o">&gt;</span> <span class="n">task</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="n">ref</span><span class="p">();</span>
+</span><span class='line'>        <span class="n">m_targetThread</span><span class="o">-&gt;</span><span class="n">postTask</span><span class="p">(</span><span class="n">createCCThreadTask</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">CCScopedThreadProxy</span><span class="o">::</span><span class="n">runTaskIfNotShutdown</span><span class="p">,</span> <span class="n">task</span><span class="p">));</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kt">void</span> <span class="n">shutdown</span><span class="p">()</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="n">ASSERT</span><span class="p">(</span><span class="n">currentThread</span><span class="p">()</span> <span class="o">==</span> <span class="n">m_targetThread</span><span class="o">-&gt;</span><span class="n">threadID</span><span class="p">());</span>
+</span><span class='line'>        <span class="n">ASSERT</span><span class="p">(</span><span class="o">!</span><span class="n">m_shutdown</span><span class="p">);</span>
+</span><span class='line'>        <span class="n">m_shutdown</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">private</span><span class="o">:</span>
+</span><span class='line'>    <span class="k">explicit</span> <span class="n">CCScopedThreadProxy</span><span class="p">(</span><span class="n">CCThread</span><span class="o">*</span> <span class="n">targetThread</span><span class="p">)</span>
+</span><span class='line'>        <span class="o">:</span> <span class="n">m_targetThread</span><span class="p">(</span><span class="n">targetThread</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">,</span> <span class="n">m_shutdown</span><span class="p">(</span><span class="kc">false</span><span class="p">)</span> <span class="p">{</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kt">void</span> <span class="n">runTaskIfNotShutdown</span><span class="p">(</span><span class="n">PassOwnPtr</span><span class="o">&lt;</span><span class="n">CCThread</span><span class="o">::</span><span class="n">Task</span><span class="o">&gt;</span> <span class="n">popTask</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="n">OwnPtr</span><span class="o">&lt;</span><span class="n">CCThread</span><span class="o">::</span><span class="n">Task</span><span class="o">&gt;</span> <span class="n">task</span> <span class="o">=</span> <span class="n">popTask</span><span class="p">;</span>
+</span><span class='line'>        <span class="c1">// If our shutdown flag is set, it&#39;s possible that m_targetThread has already been destroyed so don&#39;t</span>
+</span><span class='line'>        <span class="c1">// touch it.</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">m_shutdown</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>            <span class="n">deref</span><span class="p">();</span>
+</span><span class='line'>            <span class="k">return</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>        <span class="n">ASSERT</span><span class="p">(</span><span class="n">currentThread</span><span class="p">()</span> <span class="o">==</span> <span class="n">m_targetThread</span><span class="o">-&gt;</span><span class="n">threadID</span><span class="p">());</span>
+</span><span class='line'>        <span class="n">task</span><span class="o">-&gt;</span><span class="n">performTask</span><span class="p">();</span>
+</span><span class='line'>        <span class="n">deref</span><span class="p">();</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">CCThread</span><span class="o">*</span> <span class="n">m_targetThread</span><span class="p">;</span>
+</span><span class='line'>    <span class="kt">bool</span> <span class="n">m_shutdown</span><span class="p">;</span> <span class="c1">// Only accessed on the target thread</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="cp">#endif</span>
+</span></code></pre></td></tr></table></div></figure>
 
 
 <h4>2. 简单的线程队列案例:</h4>
@@ -351,7 +412,7 @@ rake preview         //进入预览
 <ol>
 <li><p>ssh生成密钥得方法</p>
 
-<blockquote><p>ssh-keygen -t rsa -C &ldquo;<a href="&#109;&#97;&#x69;&#108;&#x74;&#111;&#x3a;&#x59;&#x6f;&#117;&#114;&#x45;&#109;&#97;&#x69;&#108;&#x40;&#101;&#x78;&#97;&#109;&#112;&#108;&#101;&#x2e;&#x63;&#x6f;&#109;">&#89;&#x6f;&#x75;&#114;&#x45;&#x6d;&#97;&#105;&#x6c;&#64;&#101;&#120;&#97;&#109;&#112;&#108;&#101;&#x2e;&#99;&#111;&#x6d;</a>&rdquo;</p></blockquote></li>
+<blockquote><p>ssh-keygen -t rsa -C &ldquo;<a href="&#x6d;&#97;&#105;&#108;&#116;&#111;&#x3a;&#x59;&#111;&#117;&#114;&#69;&#109;&#97;&#105;&#108;&#64;&#x65;&#x78;&#x61;&#x6d;&#x70;&#108;&#101;&#46;&#99;&#x6f;&#109;">&#x59;&#x6f;&#x75;&#114;&#x45;&#x6d;&#97;&#105;&#x6c;&#x40;&#x65;&#x78;&#97;&#x6d;&#112;&#108;&#101;&#46;&#x63;&#111;&#x6d;</a>&rdquo;</p></blockquote></li>
 </ol>
 
 
@@ -368,7 +429,7 @@ rake preview         //进入预览
 </ol>
 
 
-<blockquote><p>ssh -T <a href="&#x6d;&#97;&#x69;&#108;&#116;&#x6f;&#x3a;&#x67;&#x69;&#x74;&#x40;&#103;&#105;&#x74;&#x68;&#x75;&#98;&#x2e;&#99;&#111;&#x6d;">&#x67;&#105;&#116;&#x40;&#103;&#105;&#116;&#104;&#117;&#x62;&#x2e;&#99;&#111;&#x6d;</a></p></blockquote>
+<blockquote><p>ssh -T <a href="&#109;&#x61;&#105;&#x6c;&#x74;&#x6f;&#x3a;&#x67;&#105;&#x74;&#64;&#x67;&#105;&#116;&#104;&#117;&#98;&#46;&#x63;&#x6f;&#x6d;">&#x67;&#x69;&#x74;&#x40;&#103;&#x69;&#x74;&#x68;&#x75;&#x62;&#x2e;&#99;&#x6f;&#109;</a></p></blockquote>
 
 <p>我得得到如下结果:
 <img class="center" src="http://www.ikitweb.com/images/2014-4/ssht.png"></p>
