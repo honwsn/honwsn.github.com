@@ -21,8 +21,8 @@ categories:
 MessageQueue的实现重要的一点：**要保证对消息队列操作的同步和互斥**.在linux中，就涉及到两个技术点取实现，一个是互斥变量Mute，一个是信号量Condition:
 <!--more-->
 下面是伪代码：
-	
-	class loopThread:public Thread{
+``` cpp loopThread 	
+class loopThread:public Thread{
 	public:
 		void addTask(Task * task,bool needSignal);
 		Task * popTask();
@@ -62,11 +62,11 @@ MessageQueue的实现重要的一点：**要保证对消息队列操作的同步
     		
     		//1.check taskQueue have pending task or not
     		while(!taskQueue.size()){
-    			//这里使用while而不是if，是因为有可能存在多个
+    			/*这里使用while而不是if，是因为有可能存在多个
     			loopThread线程都在等待，但唤醒后，
     			只能有一个线程进行下面的执行，导致条件发生改变，
     			所以其他线程在接着执行时，任务需要条件判断一次。
-    			这就是所谓的“惊群效应”
+    			这就是所谓的“惊群效应”*/
     			operationsCond.wait（operationsMutex）
     		}
     		
@@ -77,12 +77,12 @@ MessageQueue的实现重要的一点：**要保证对消息队列操作的同步
     		operationsMutex.unLock();
     	
     		//3.excute this task;
-    		if(task){
-    			task->run();
+    		if(currentTask){
+    			currentTask->run();
     		}
     	}
     }
-
+```
 
 ###二. 互斥变量Mutex和条件变量Condition的使用场景
 mutex和condition对象主要是pthread接口的封装，最终调用的POSIX api 如下：
