@@ -96,8 +96,8 @@ mutex和condition对象主要是pthread接口的封装，最终调用的POSIX ap
 	//2.条件等待:  
 	pthread_cond_init  
 	pthread_cond_wait(&conidtion,&mutex);  
-	phtread_cond_timewait  
-	phtread_cond_signal
+	phtread_cond_timewait	  
+	phtread_cond_signal	
 	
 ####1. pthread_cond_wait()的使用过程说明  
 	pthread_mutex_lock(&mutex);
@@ -134,12 +134,12 @@ mutex.lock()->**mutext.unlock()-->mutex.lock()**-->mutext.unlock()
 
 在thread线程类接口供外部使用时，建立一个ThreadProxy是一个良好的方式。
 
-下面可以停止某个外部对象(就是个threadproxy)使用当前的thread。
-`m_mainThreadProxy->shutdown()`
 
-[CCScopedThreadProxy](http://opensource.apple.com/source/WebCore/WebCore-1640.1/platform/graphics/chromium/cc/CCScopedThreadProxy.h)
-<pre>
-<code>
+
+[CCScopedThreadProxy](http://opensource.apple.com/source/WebCore/WebCore-1640.1/platform/graphics/chromium/cc/CCScopedThreadProxy.h)的设计：线程API通过创建一个proxy给外部线程使用，但线程自己可以关闭这个使用。下面可以停止某个外部对象(就是个threadproxy)使用当前的thread。
+`CCScopedThreadProxy::shutdown()`
+
+``` cpp CCScopedThreadProxy.h http://opensource.apple.com/source/WebCore/WebCore-1640.1/platform/graphics/chromium/cc/CCScopedThreadProxy.h 
 #ifndef CCScopedThreadProxy_h
 #define CCScopedThreadProxy_h
 
@@ -149,10 +149,10 @@ mutex.lock()->**mutext.unlock()-->mutex.lock()**-->mutext.unlock()
 
 namespace WebCore {
 
-<span style="color:red"">// This class is a proxy used to post tasks to an target thread from any other thread. The proxy may be shut down at
+// This class is a proxy used to post tasks to an target thread from any other thread. The proxy may be shut down at
 // any point from the target thread after which no more tasks posted to the proxy will run. In other words, all
 // tasks posted via a proxy are scoped to the lifecycle of the proxy. Use this when posting tasks to an object that
-// might die with tasks in flight.</span>
+// might die with tasks in flight.
 //
 // The proxy must be created and shut down from the target thread, tasks may be posted from any thread.
 //
@@ -206,8 +206,7 @@ private:
 };
 }
 #endif
-</code>
-</pre>
+```
 	
  
 
