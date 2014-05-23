@@ -141,7 +141,7 @@ mutex.lock()->**mutext.unlock()-->mutex.lock()**-->mutext.unlock()
 [CCScopedThreadProxy](http://opensource.apple.com/source/WebCore/WebCore-1640.1/platform/graphics/chromium/cc/CCScopedThreadProxy.h)的设计：线程API通过创建一个proxy给外部线程使用，但线程自己可以关闭这个使用。下面可以停止某个外部对象(就是个threadproxy)使用当前的thread。
 `CCScopedThreadProxy::shutdown()`
 
-{% coderay lang:cplusplus linenos:true CCScopedThreadProxy.h http://opensource.apple.com/source/WebCore/WebCore-1640.1/platform/graphics/chromium/cc/CCScopedThreadProxy.h  linek %} 
+{% coderay lang:cplusplus linenos:true CCScopedThreadProxy.h http://opensource.apple.com/source/WebCore/WebCore-1640.1/platform/graphics/chromium/cc/CCScopedThreadProxy.h  link %} 
 #ifndef CCScopedThreadProxy_h
 #define CCScopedThreadProxy_h
 
