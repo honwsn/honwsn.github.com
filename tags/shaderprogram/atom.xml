@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Tag: shaderprogram | I. KIT. WEB]]></title>
+  <link href="http://www.ikitweb.com/tags/shaderprogram/atom.xml" rel="self"/>
+  <link href="http://www.ikitweb.com/"/>
+  <updated>2014-05-23T20:57:20+08:00</updated>
+  <id>http://www.ikitweb.com/</id>
+  <author>
+    <name><![CDATA[ianwang]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[android webkit中的正交投影与glViewPort]]></title>
+    <link href="http://www.ikitweb.com/blog/2014/05/23/glviewport/"/>
+    <updated>2014-05-23T19:21:20+08:00</updated>
+    <id>http://www.ikitweb.com/blog/2014/05/23/glviewport</id>
+    <content type="html"><![CDATA[<p>这里讨论的是opengGL<strong>正交投影矩阵</strong>的概念，结合webkit渲染中的应用分析了下对相关接口的认识。  </p>
+
+<h3 id="glviewport">正交投影矩阵与glViewPort视口的关联</h3>
+
+<p>andriod4.0以后开启硬件加速，在webkit页面渲染方面，android适配层也有硬件加速的方案，下面的代码就来自android 4.2 webkit 源码android平台在渲染侧的适配。</p>
+
+<p><a href="https://android.googlesource.com/platform/external/webkit/+/e927713a108744aab661abdf0ee4b8d98349a1bd/Source/WebCore/platform/graphics/android/rendering/ShaderProgram.cpp">shaderprogram.cpp</a></p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><div style='overflow-x:auto; overflow-y:hidden;'> <div class="CodeRay">
+  <div class="code"><pre>
+<span class="directive">void</span> GLUtils::setOrthographicMatrix(TransformationMatrix&amp;amp; ortho, <span class="predefined-type">float</span> left,
+<span class="predefined-type">float</span> top,<span class="predefined-type">float</span> right, <span class="predefined-type">float</span> bottom, <span class="predefined-type">float</span> nearZ,
+<span class="predefined-type">float</span> farZ)&lt;br /&gt;
+{&lt;br /&gt;
+<span class="predefined-type">float</span> deltaX = right - left;&lt;br /&gt;
+<span class="predefined-type">float</span> deltaY = top - bottom;&lt;br /&gt;
+<span class="predefined-type">float</span> deltaZ = farZ - nearZ;&lt;br /&gt;
+<span class="keyword">if</span> (!deltaX || !deltaY || !deltaZ)&lt;br /&gt;
+<span class="keyword">return</span>;  &lt;/p&gt;
+
+&lt;p&gt;ortho.setM11(<span class="float">2</span><span class="float">.0f</span> / deltaX);&lt;br /&gt;
+ortho.setM41(-(right + left) / deltaX);&lt;br /&gt;
+ortho.setM22(<span class="float">2</span><span class="float">.0f</span> / deltaY);&lt;br /&gt;
+ortho.setM42(-(top + bottom) / deltaY);&lt;br /&gt;
+ortho.setM33(-<span class="float">2</span><span class="float">.0f</span> / deltaZ);&lt;br /&gt;
+ortho.setM43(-(nearZ + farZ) / deltaZ);&lt;br /&gt;
+}
+</pre></div>
+</div>
+ </div> </figure></notextile></div></p>
+
+<p>上面的参数坐标是窗口坐标,定义了正交投影在窗口中的区域（位置和大小），返回的ortho是建立好的正交投影矩阵，具体公式原理，可以参考<a href="http://blog.csdn.net/popy007/article/details/4126809">这里</a></p>
+
+<p><img class="center" src="/images/2014-5/ortho.png"></p>
+
+<p>若正交投影坐标矩阵的区域大小若与glViewPort指定的视口大小不一致，则绘制画面就会被拉伸或者缩小。窗口点坐标经过正交矩阵变换后就会被映射到<strong>OpenGL viewport
+坐标系（坐标范围是-1，1）</strong>，但glViewPort指定的窗口区域物理大小与正交投影坐标系指定的窗口区域物理大小不一致（
+GLUtils::setOrthographicMatrix），所以出现上述情况。
+<!--more--></p>
+
+<p>例如下面，我是把ShaderProgram.cpp::setupDrawing,GLUtils::setOrthographicMatrix
+中的高度改成了原来的一半,但glviewport的值没有变动，所以，画面就被拉伸了。</p>
+
+<p><img class="center" src="/images/2014-5/halforthoforviewport.png"></p>
+
+<h3 id="glscissorglviewport">glScissor与glViewPort关系</h3>
+
+<p>二者使用的坐标系都是窗口坐标系以窗口左下角为原点</p>
+
+<p>glScissor是对RenderBuffer进行裁剪。超出裁剪区域的不会进行绘制操作。
+  glViewPort是指明RenderBuffer之上的视口大小，这个视口就是后面opengl指令的绘制对象。opengl使用的顶点坐标，坐标系为（-1，1），中间是（0，0），即视口（glViewPort指定）的中间是坐标原点。此外glviewport还定义了openggl坐标到窗口坐标系(使用的像素坐标)的转换，后面将有提到。</p>
+
+<p>在裁剪方面，glScissor与glViewPort的区域大小应该是相同的，是一种<a href="http://gamedev.stackexchange.com/questions/40704/what-is-the-
+purpose-of-glscissor">互补的关系</a></p>
+
+<blockquote>
+  <p>They are more complementary than alternatives to each other. You almost always
+want to set the scissor rectangle to the same values as the viewport.</p>
+</blockquote>
+
+<blockquote>
+  <p>glViewport() specifies a transformation from normalized projection space to
+screen space. Polygons are clipped to the edge of projection space, <strong>but other
+draw operations like glClear() are not</strong>. So, you use glViewport() to determine
+the location and size of the screen space viewport region, but the rasterizer
+can still occasionally render pixels outside that region.</p>
+</blockquote>
+
+<blockquote>
+  <p>That’s where scissor in comes in. glScissor() defines a screen space rectangle
+beyond which <em>nothing</em> is drawn (if the scissor test is enabled).</p>
+</blockquote>
+
+<blockquote>
+  <p>So for example, the following code will clear the whole screen, even though
+the viewport is set to a small portion of the larger window:</p>
+</blockquote>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><div style='overflow-x:auto; overflow-y:hidden;'> <div class="CodeRay">
+  <div class="code"><pre>  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;glViewport(<span class="integer">200</span>,<span class="integer">200</span>,<span class="integer">100</span>,<span class="integer">100</span>);
+glClear(GL_COLOR_BUFFER_BIT);  </pre></div>
+</div>
+ </div> </figure></notextile></div>
+</code></pre>
+
+<blockquote>
+  <p>Adding glScissor() and enabling the scissor test (which is disabled by
+default) restricts the clear.
+<div class='bogus-wrapper'><notextile><figure class='code'><div style='overflow-x:auto; overflow-y:hidden;'> <div class="CodeRay">
+  <div class="code"><pre>&lt;/p&gt;
+&lt;/blockquote&gt;
+
+      glViewport(<span class="integer">200</span>,<span class="integer">200</span>,<span class="integer">100</span>,<span class="integer">100</span>);
+&lt;pre&gt;&lt;code&gt;glScissor(<span class="integer">200</span>,<span class="integer">200</span>,<span class="integer">100</span>,<span class="integer">100</span>);
+glEnable(GL_SCISSOR_TEST);
+glClear(GL_COLOR_BUFFER_BIT);  </pre></div>
+</div>
+ </div> </figure></notextile></div>
+</code></pre>
+
+<blockquote>
+  <p>Occasionally you come across an implementation that automatically scissors to
+the viewport region, but that violates the GL specification.</p>
+</blockquote>
+
+<blockquote>
+  <p>Beyond that, the scissor rectangle can be used to temporarily restrict drawing
+to a sub-rectangle of the viewport, for special effects, UI elements,
+etc.</p>
+</blockquote>
+
+<p><strong>就是说glScissor可以只让glViewPort内一部分区域绘制</strong></p>
+
+<h3 id="opengl">opengl坐标转换为窗口坐标</h3>
+
+<p>前面说过glViewport指定了opengl坐标系（-1，1 normalized device
+coordinates）如何转换到窗口像素坐标系?</p>
+
+<p>公式代码如下：
+把opengl坐标openglX,opengY(in -1,1 range)转换到窗口坐标（以左下角为原点的像素坐标）winX，winY。
+<div class='bogus-wrapper'><notextile><figure class='code'><div style='overflow-x:auto; overflow-y:hidden;'> <div class="CodeRay">
+  <div class="code"><pre>
+winX = (openglX+<span class="integer">1</span>)/<span class="integer">2</span>&lt;em&gt;GLViewPort.width() + GLViewport.x();
+winY = (openglY+<span class="integer">1</span>)/<span class="integer">2</span>&lt;/em&gt;GLViewPort.height() + GLViewport.Y();
+</pre></div>
+</div>
+ </div> </figure></notextile></div></p>
+
+<p>下面以android 42 webkit 绘制为例，说明下其中的opengl坐标到窗口坐标的转换。</p>
+
+<p>ShaderProgram::debugMatrixTransform说明一个道理，坐标不一定是存储在顶点rect里面的，有可能是在matrix里面，在opengles里面这样做的好处有两点：</p>
+
+<ul>
+  <li>每个绘制单元的顶点坐标都是一样的，这样向gpu传输一次顶点坐标即可，减少了顶点数据的存储和带宽</li>
+  <li>顶点变换存储在matrix里面，而matrix作为一致性变量传给顶点着色器进行处理。</li>
+  <li>debugMatrixTransform 只是个调试接口，matrix.mapRect的输出是这个绘制单元的最终opengles坐标。</li>
+</ul>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption class='code-header' style='margin-bottom:-5px;'><span>shaderprogram.cpp</span><a href='https://android.googlesource.com/platform/external/webkit/+/e927713a108744aab661abdf0ee4b8d98349a1bd/Source/WebCore/platform/graphics/android/rendering/ShaderProgram.cpp'>link </a></figcaption><div style='overflow-x:auto; overflow-y:hidden;'> <table class="CodeRay"><tr>
+  <td class="line-numbers"><pre><a href="#n1" name="n1">1</a>
+<a href="#n2" name="n2">2</a>
+<a href="#n3" name="n3">3</a>
+<a href="#n4" name="n4">4</a>
+<a href="#n5" name="n5">5</a>
+<a href="#n6" name="n6">6</a>
+<a href="#n7" name="n7">7</a>
+<a href="#n8" name="n8">8</a>
+<a href="#n9" name="n9">9</a>
+<strong><a href="#n10" name="n10">10</a></strong>
+<a href="#n11" name="n11">11</a>
+<a href="#n12" name="n12">12</a>
+<a href="#n13" name="n13">13</a>
+<a href="#n14" name="n14">14</a>
+<a href="#n15" name="n15">15</a>
+<a href="#n16" name="n16">16</a>
+<a href="#n17" name="n17">17</a>
+<a href="#n18" name="n18">18</a>
+<a href="#n19" name="n19">19</a>
+<strong><a href="#n20" name="n20">20</a></strong>
+<a href="#n21" name="n21">21</a>
+<a href="#n22" name="n22">22</a>
+<a href="#n23" name="n23">23</a>
+<a href="#n24" name="n24">24</a>
+<a href="#n25" name="n25">25</a>
+<a href="#n26" name="n26">26</a>
+<a href="#n27" name="n27">27</a>
+<a href="#n28" name="n28">28</a>
+<a href="#n29" name="n29">29</a>
+<strong><a href="#n30" name="n30">30</a></strong>
+<a href="#n31" name="n31">31</a>
+<a href="#n32" name="n32">32</a>
+<a href="#n33" name="n33">33</a>
+<a href="#n34" name="n34">34</a>
+<a href="#n35" name="n35">35</a>
+<a href="#n36" name="n36">36</a>
+<a href="#n37" name="n37">37</a>
+<a href="#n38" name="n38">38</a>
+<a href="#n39" name="n39">39</a>
+<strong><a href="#n40" name="n40">40</a></strong>
+<a href="#n41" name="n41">41</a>
+<a href="#n42" name="n42">42</a>
+<a href="#n43" name="n43">43</a>
+<a href="#n44" name="n44">44</a>
+<a href="#n45" name="n45">45</a>
+<a href="#n46" name="n46">46</a>
+<a href="#n47" name="n47">47</a>
+<a href="#n48" name="n48">48</a>
+<a href="#n49" name="n49">49</a>
+<strong><a href="#n50" name="n50">50</a></strong>
+<a href="#n51" name="n51">51</a>
+<a href="#n52" name="n52">52</a>
+<a href="#n53" name="n53">53</a>
+<a href="#n54" name="n54">54</a>
+<a href="#n55" name="n55">55</a>
+<a href="#n56" name="n56">56</a>
+<a href="#n57" name="n57">57</a>
+</pre></td>
+  <td class="code"><pre>
+#if DEBUG_MATRIX&lt;/p&gt;
+
+&lt;p&gt;FloatRect ShaderProgram::debugMatrixTransform(const TransformationMatrix&amp;amp; matrix,const char* matrixName)
+{
+    FloatRect rect(0.0, 0.0, 1.0, 1.0);&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;rect = matrix.mapRect(rect);
+ALOGV(&quot;After %s matrix:\n %f, %f rect.width() %f rect.height() %f&quot;,
+      matrixName, rect.x(), rect.y(), rect.width(), rect.height());
+return rect;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;}&lt;/p&gt;
+
+&lt;p&gt;void ShaderProgram::debugMatrixInfo(float currentScale,
+                                    const TransformationMatrix&amp;amp; clipProjectionMatrix,
+                                    const TransformationMatrix&amp;amp; webViewMatrix,
+                                    const TransformationMatrix&amp;amp; modifiedDrawMatrix,
+                                    const TransformationMatrix* layerMatrix)
+{
+    int viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    ALOGV(“viewport %d, %d, %d, %d , currentScale %f”,
+          viewport[0], viewport[1], viewport[2], viewport[3], currentScale);
+    IntRect currentGLViewport(viewport[0], viewport[1], viewport[2], viewport[3]);&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;TransformationMatrix scaleMatrix;
+scaleMatrix.scale3d(currentScale, currentScale, 1.0);
+
+if (layerMatrix)
+    debugMatrixTransform(*layerMatrix, &quot;layerMatrix&quot;);
+
+TransformationMatrix debugMatrix = scaleMatrix * modifiedDrawMatrix;
+debugMatrixTransform(debugMatrix, &quot;scaleMatrix * modifiedDrawMatrix&quot;);
+
+debugMatrix = webViewMatrix * debugMatrix;
+debugMatrixTransform(debugMatrix, &quot;webViewMatrix * scaleMatrix * modifiedDrawMatrix&quot;);
+
+debugMatrix = clipProjectionMatrix * debugMatrix;
+FloatRect finalRect =
+    debugMatrixTransform(debugMatrix, &quot;all Matrix&quot;);
+ 
+ //finalRect 是opengles的某个区域坐标，in a (-1, 1) range
+ //后面输出是以左下角为原点的窗口坐标
+   
+// After projection, we will be in a (-1, 1) range and now we can map it back
+// to the (x,y) -&amp;gt; (x+width, y+height)
+ALOGV(&quot;final convert to screen coord x, y %f, %f width %f height %f , &quot;,
+      (finalRect.x() + 1) / 2 * currentGLViewport.width() + currentGLViewport.x(),
+      (finalRect.y() + 1) / 2 * currentGLViewport.height() + currentGLViewport.y(),
+      finalRect.width() * currentGLViewport.width() / 2,
+      finalRect.height() * currentGLViewport.height() / 2);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;}
+#endif // DEBUG_MATRIX
+</pre></td>
+</tr></table>
+ </div> </figure></notextile></div></p>
+
+]]></content>
+  </entry>
+  
+</feed>

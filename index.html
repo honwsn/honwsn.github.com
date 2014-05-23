@@ -9,8 +9,7 @@
   <meta name="author" content="ianwang">
 
   
-  <meta name="description" content="一. 实现一个有消息队列的线程 大概有以下接口： 添加任务到消息队列: addTask 从消息队列中获取任务: popTask 执行这个任务 要实现一个线程的循环体:threadRunloop. 上述操作是在多个线程中执行的，例如addTask可以由任何一个线程执行。
-而popTask， &hellip;">
+  <meta name="description" content="这里讨论的是opengGL正交投影矩阵的概念，结合webkit渲染中的应用分析了下对相关接口的认识。 正交投影矩阵与glViewPort视口的关联 andriod4.0以后开启硬件加速，在webkit页面渲染方面，android适配层也有硬件加速的方案，下面的代码就来自android 4.2 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -66,6 +65,86 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/05/23/glviewport/">Android webkit中的正交投影与glViewPort</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-05-23T19:21:20+08:00" pubdate data-updated="true">May 23<span>rd</span>, 2014</time>
+        
+           | <a href="/blog/2014/05/23/glviewport/#disqus_thread"
+             data-disqus-identifier="http://www.ikitweb.com/blog/2014/05/23/glviewport/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>这里讨论的是opengGL<strong>正交投影矩阵</strong>的概念，结合webkit渲染中的应用分析了下对相关接口的认识。  </p>
+
+<h3 id="glviewport">正交投影矩阵与glViewPort视口的关联</h3>
+
+<p>andriod4.0以后开启硬件加速，在webkit页面渲染方面，android适配层也有硬件加速的方案，下面的代码就来自android 4.2 webkit 源码android平台在渲染侧的适配。</p>
+
+<p><a href="https://android.googlesource.com/platform/external/webkit/+/e927713a108744aab661abdf0ee4b8d98349a1bd/Source/WebCore/platform/graphics/android/rendering/ShaderProgram.cpp">shaderprogram.cpp</a></p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><div style="overflow-x:auto; overflow-y:hidden;"> <div class="CodeRay">
+  <div class="code"><pre>
+<span class="directive">void</span> GLUtils::setOrthographicMatrix(TransformationMatrix&amp; ortho, <span class="predefined-type">float</span> left,
+<span class="predefined-type">float</span> top,<span class="predefined-type">float</span> right, <span class="predefined-type">float</span> bottom, <span class="predefined-type">float</span> nearZ,
+<span class="predefined-type">float</span> farZ)  
+{  
+<span class="predefined-type">float</span> deltaX = right - left;  
+<span class="predefined-type">float</span> deltaY = top - bottom;  
+<span class="predefined-type">float</span> deltaZ = farZ - nearZ;  
+<span class="keyword">if</span> (!deltaX || !deltaY || !deltaZ)  
+<span class="keyword">return</span>;  
+  
+ortho.setM11(<span class="float">2</span><span class="float">.0f</span> / deltaX);  
+ortho.setM41(-(right + left) / deltaX);  
+ortho.setM22(<span class="float">2</span><span class="float">.0f</span> / deltaY);  
+ortho.setM42(-(top + bottom) / deltaY);  
+ortho.setM33(-<span class="float">2</span><span class="float">.0f</span> / deltaZ);  
+ortho.setM43(-(nearZ + farZ) / deltaZ);  
+}
+</pre></div>
+</div>
+ </div> </figure></notextile></div>
+
+<p>上面的参数坐标是窗口坐标,定义了正交投影在窗口中的区域（位置和大小），返回的ortho是建立好的正交投影矩阵，具体公式原理，可以参考<a href="http://blog.csdn.net/popy007/article/details/4126809">这里</a></p>
+
+<p><img class="center" src="/images/2014-5/ortho.png" /></p>
+
+<p>若正交投影坐标矩阵的区域大小若与glViewPort指定的视口大小不一致，则绘制画面就会被拉伸或者缩小。窗口点坐标经过正交矩阵变换后就会被映射到<strong>OpenGL viewport
+坐标系（坐标范围是-1，1）</strong>，但glViewPort指定的窗口区域物理大小与正交投影坐标系指定的窗口区域物理大小不一致（
+GLUtils::setOrthographicMatrix），所以出现上述情况。
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/05/23/glviewport/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -235,6 +314,10 @@ You don’t have write permissions for the /Library/Ruby/&gt;Gems/2.1.0 director
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/05/23/glviewport/">Android webkit中的正交投影与glViewPort</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/04/16/about-thread-message-queue-design/">关于线程消息队列的设计</a>
       </li>
     
@@ -255,23 +338,25 @@ You don’t have write permissions for the /Library/Ruby/&gt;Gems/2.1.0 director
 <section>
   <h1>Tags</h1>
   <ul class="tag-cloud">
-    <a style="font-size: 100%" href="/tags/homebrew/">homebrew</a>
+    <a style="font-size: 100%" href="/tags/mac/">mac</a>
+<a style="font-size: 100%" href="/tags/shaderprogram/">shaderprogram</a>
+<a style="font-size: 200%" href="/tags/webkit/">webkit</a>
 <a style="font-size: 100%" href="/tags/rvm/">rvm</a>
-<a style="font-size: 100%" href="/tags/mac/">mac</a>
-<a style="font-size: 100%" href="/tags/octopress/">octopress</a>
-<a style="font-size: 163%" href="/tags/webkit/">webkit</a>
-<a style="font-size: 100%" href="/tags/chrome/">chrome</a>
 <a style="font-size: 200%" href="/tags/ruby/">ruby</a>
-<a style="font-size: 100%" href="/tags/thread/">thread</a>
-<a style="font-size: 100%" href="/tags/git/">git</a>
+<a style="font-size: 100%" href="/tags/octopress/">octopress</a>
+<a style="font-size: 100%" href="/tags/chrome/">chrome</a>
 <a style="font-size: 100%" href="/tags/xcode/">xcode</a>
+<a style="font-size: 100%" href="/tags/ortho/">ortho</a>
+<a style="font-size: 100%" href="/tags/glscissor/">glScissor</a>
 
   </ul>
 </section><section>
     <h1>Categories</h1>
     <ul id="categories">
-        <li class='category'><a href='/blog/categories/octopress/'>octopress (1)</a></li>
-<li class='category'><a href='/blog/categories/webkit/'>webkit (2)</a></li>
+        <li class='category'><a href='/blog/categories/android/'>android (1)</a></li>
+<li class='category'><a href='/blog/categories/octopress/'>octopress (1)</a></li>
+<li class='category'><a href='/blog/categories/opengl/'>opengl (1)</a></li>
+<li class='category'><a href='/blog/categories/webkit/'>webkit (3)</a></li>
 
     </ul>
 </section>
