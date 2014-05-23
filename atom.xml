@@ -4,7 +4,7 @@
   <title><![CDATA[I. KIT. WEB]]></title>
   <link href="http://www.ikitweb.com/atom.xml" rel="self"/>
   <link href="http://www.ikitweb.com/"/>
-  <updated>2014-05-22T16:59:43+08:00</updated>
+  <updated>2014-05-23T12:33:02+08:00</updated>
   <id>http://www.ikitweb.com/</id>
   <author>
     <name><![CDATA[ianwang]]></name>
@@ -18,358 +18,370 @@
     <link href="http://www.ikitweb.com/blog/2014/04/16/about-thread-message-queue-design/"/>
     <updated>2014-04-16T19:35:20+08:00</updated>
     <id>http://www.ikitweb.com/blog/2014/04/16/about-thread-message-queue-design</id>
-    <content type="html"><![CDATA[<h3>一. 实现一个有消息队列的线程</h3>
+    <content type="html"><![CDATA[<h3 id="section">一. 实现一个有消息队列的线程</h3>
 
-<p>大概有以下接口：</p>
+<p>大概有以下接口：  </p>
 
 <ul>
-<li>添加任务到消息队列: addTask</li>
-<li>从消息队列中获取任务: popTask</li>
-<li>执行这个任务</li>
-<li>要实现一个线程的循环体:threadRunloop.</li>
+  <li>添加任务到消息队列: addTask</li>
+  <li>从消息队列中获取任务: popTask </li>
+  <li>执行这个任务</li>
+  <li>要实现一个线程的循环体:threadRunloop.</li>
 </ul>
-
 
 <p>上述操作是在多个线程中执行的，例如addTask可以由任何一个线程执行。
 而popTask，threadRunloop只在当前线程执行。</p>
 
-<p>MessageQueue的实现重要的一点：<strong>要保证对消息队列操作的同步和互斥</strong>.在linux中，就涉及到两个技术点取实现，一个是互斥变量Mute，一个是信号量Condition:</p>
-
+<p>MessageQueue的实现重要的一点：<strong>要保证对消息队列操作的同步和互斥</strong>.在linux中，就涉及到两个技术点取实现，一个是互斥变量Mute，一个是信号量Condition:
 <!--more-->
+下面是伪代码：</p>
 
+<div class="bogus-wrapper"><notextile><figure class="code"><div style="overflow-x:auto; overflow-y:hidden;"> <table class="CodeRay"><tr>
+  <td class="line-numbers"><pre><a href="#n1" name="n1">1</a>
+<a href="#n2" name="n2">2</a>
+<a href="#n3" name="n3">3</a>
+<a href="#n4" name="n4">4</a>
+<a href="#n5" name="n5">5</a>
+<a href="#n6" name="n6">6</a>
+<a href="#n7" name="n7">7</a>
+<a href="#n8" name="n8">8</a>
+<a href="#n9" name="n9">9</a>
+<strong><a href="#n10" name="n10">10</a></strong>
+<a href="#n11" name="n11">11</a>
+<a href="#n12" name="n12">12</a>
+<a href="#n13" name="n13">13</a>
+<a href="#n14" name="n14">14</a>
+<a href="#n15" name="n15">15</a>
+<a href="#n16" name="n16">16</a>
+<a href="#n17" name="n17">17</a>
+<a href="#n18" name="n18">18</a>
+<a href="#n19" name="n19">19</a>
+<strong><a href="#n20" name="n20">20</a></strong>
+<a href="#n21" name="n21">21</a>
+<a href="#n22" name="n22">22</a>
+<a href="#n23" name="n23">23</a>
+<a href="#n24" name="n24">24</a>
+<a href="#n25" name="n25">25</a>
+<a href="#n26" name="n26">26</a>
+<a href="#n27" name="n27">27</a>
+<a href="#n28" name="n28">28</a>
+<a href="#n29" name="n29">29</a>
+<strong><a href="#n30" name="n30">30</a></strong>
+<a href="#n31" name="n31">31</a>
+<a href="#n32" name="n32">32</a>
+<a href="#n33" name="n33">33</a>
+<a href="#n34" name="n34">34</a>
+<a href="#n35" name="n35">35</a>
+<a href="#n36" name="n36">36</a>
+<a href="#n37" name="n37">37</a>
+<a href="#n38" name="n38">38</a>
+<a href="#n39" name="n39">39</a>
+<strong><a href="#n40" name="n40">40</a></strong>
+<a href="#n41" name="n41">41</a>
+<a href="#n42" name="n42">42</a>
+<a href="#n43" name="n43">43</a>
+<a href="#n44" name="n44">44</a>
+<a href="#n45" name="n45">45</a>
+<a href="#n46" name="n46">46</a>
+<a href="#n47" name="n47">47</a>
+<a href="#n48" name="n48">48</a>
+<a href="#n49" name="n49">49</a>
+<strong><a href="#n50" name="n50">50</a></strong>
+<a href="#n51" name="n51">51</a>
+<a href="#n52" name="n52">52</a>
+<a href="#n53" name="n53">53</a>
+<a href="#n54" name="n54">54</a>
+<a href="#n55" name="n55">55</a>
+<a href="#n56" name="n56">56</a>
+<a href="#n57" name="n57">57</a>
+<a href="#n58" name="n58">58</a>
+<a href="#n59" name="n59">59</a>
+<strong><a href="#n60" name="n60">60</a></strong>
+<a href="#n61" name="n61">61</a>
+</pre></td>
+  <td class="code"><pre>
+<span class="keyword">class</span> <span class="class">loopThread</span>:<span class="directive">public</span> Thread{
+    <span class="directive">public</span>:
+        <span class="directive">void</span> addTask(Task * task,<span class="predefined-type">bool</span> needSignal);
+        Task * popTask();
+    <span class="directive">private</span>:
+        <span class="directive">void</span> threadRunloop();
+        MessageQueue taskQueue;
+        Mutex operationsMutex;
+        Condition operationsCond;
+    }
+    
+    <span class="directive">void</span> loopThread::addTask(Task * task,<span class="predefined-type">bool</span> needSignal){
+        <span class="keyword">if</span>(!task)
+            <span class="keyword">return</span>;
+            
+        operationsMutex.lock();
+        taskQueue.append(task);
+        operationsMutex.unLock();
+        
+        <span class="keyword">if</span>(needSignal){
+            operationsCond.signal();
+        }
+    }
+    
+    Task * loopThread::popTask(){
+        Task * task = taskQueue.popTaskByPriority();
+        <span class="keyword">return</span> task;
+    }
+    
+    <span class="directive">void</span> loopThread::threadRunloop(){
+        
+        Task * currentTask = null; 
+        <span class="comment">//run tasks </span>
+        <span class="predefined-type">bool</span> stop = <span class="predefined-constant">false</span>;
+        <span class="keyword">while</span>(!stop){
+        
+            operationsMutex.lock()
+            
+            <span class="comment">//1.check taskQueue have pending task or not</span>
+            <span class="keyword">while</span>(!taskQueue.size()){
+                <span class="comment">/*这里使用while而不是if，是因为有可能存在多个
+                loopThread线程都在等待，但唤醒后，
+                只能有一个线程进行下面的执行，导致条件发生改变，
+                所以其他线程在接着执行时，任务需要条件判断一次。
+                这就是所谓的“惊群效应”*/</span>
+                operationsCond.wait(operationsMutex)
+            }
+            
+            <span class="comment">//2.get a task from queue</span>
+            
+            currentTask = popTask();
+            
+            operationsMutex.unLock();
+        
+            <span class="comment">//3.excute this task;</span>
+            <span class="keyword">if</span>(currentTask){
+                currentTask-&gt;run();
+            }
+        }
+    }</pre></td>
+</tr></table>
+ </div> </figure></notextile></div>
 
-<p>下面是伪代码：</p>
-
-<figure class='code'><figcaption><span>loopThread     </span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-<span class='line-number'>35</span>
-<span class='line-number'>36</span>
-<span class='line-number'>37</span>
-<span class='line-number'>38</span>
-<span class='line-number'>39</span>
-<span class='line-number'>40</span>
-<span class='line-number'>41</span>
-<span class='line-number'>42</span>
-<span class='line-number'>43</span>
-<span class='line-number'>44</span>
-<span class='line-number'>45</span>
-<span class='line-number'>46</span>
-<span class='line-number'>47</span>
-<span class='line-number'>48</span>
-<span class='line-number'>49</span>
-<span class='line-number'>50</span>
-<span class='line-number'>51</span>
-<span class='line-number'>52</span>
-<span class='line-number'>53</span>
-<span class='line-number'>54</span>
-<span class='line-number'>55</span>
-<span class='line-number'>56</span>
-<span class='line-number'>57</span>
-<span class='line-number'>58</span>
-<span class='line-number'>59</span>
-<span class='line-number'>60</span>
-</pre></td><td class='code'><pre><code class='cpp'><span class='line'><span class="k">class</span> <span class="nc">loopThread</span><span class="o">:</span><span class="k">public</span> <span class="n">Thread</span><span class="p">{</span>
-</span><span class='line'>  <span class="k">public</span><span class="o">:</span>
-</span><span class='line'>      <span class="kt">void</span> <span class="n">addTask</span><span class="p">(</span><span class="n">Task</span> <span class="o">*</span> <span class="n">task</span><span class="p">,</span><span class="kt">bool</span> <span class="n">needSignal</span><span class="p">);</span>
-</span><span class='line'>      <span class="n">Task</span> <span class="o">*</span> <span class="n">popTask</span><span class="p">();</span>
-</span><span class='line'>  <span class="k">private</span><span class="o">:</span>
-</span><span class='line'>      <span class="kt">void</span> <span class="n">threadRunloop</span><span class="p">();</span>
-</span><span class='line'>      <span class="n">MessageQueue</span> <span class="n">taskQueue</span><span class="p">;</span>
-</span><span class='line'>      <span class="n">Mutex</span> <span class="n">operationsMutex</span><span class="p">;</span>
-</span><span class='line'>      <span class="n">Condition</span> <span class="n">operationsCond</span><span class="p">;</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'>  
-</span><span class='line'>  <span class="kt">void</span> <span class="n">loopThread</span><span class="o">::</span><span class="n">addTask</span><span class="p">(</span><span class="n">Task</span> <span class="o">*</span> <span class="n">task</span><span class="p">,</span><span class="kt">bool</span> <span class="n">needSignal</span><span class="p">){</span>
-</span><span class='line'>      <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">task</span><span class="p">)</span>
-</span><span class='line'>          <span class="k">return</span><span class="p">;</span>
-</span><span class='line'>          
-</span><span class='line'>      <span class="n">operationsMutex</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
-</span><span class='line'>      <span class="n">taskQueue</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">task</span><span class="p">);</span>
-</span><span class='line'>      <span class="n">operationsMutex</span><span class="p">.</span><span class="n">unLock</span><span class="p">();</span>
-</span><span class='line'>      
-</span><span class='line'>      <span class="k">if</span><span class="p">(</span><span class="n">needSignal</span><span class="p">){</span>
-</span><span class='line'>          <span class="n">operationsCond</span><span class="p">.</span><span class="n">signal</span><span class="p">();</span>
-</span><span class='line'>      <span class="p">}</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">Task</span> <span class="o">*</span> <span class="n">loopThread</span><span class="o">::</span><span class="n">popTask</span><span class="p">(){</span>
-</span><span class='line'>      <span class="n">Task</span> <span class="o">*</span> <span class="n">task</span> <span class="o">=</span> <span class="n">taskQueue</span><span class="p">.</span><span class="n">popTaskByPriority</span><span class="p">();</span>
-</span><span class='line'>      <span class="k">return</span> <span class="n">task</span><span class="p">;</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="kt">void</span> <span class="n">loopThread</span><span class="o">::</span><span class="n">threadRunloop</span><span class="p">(){</span>
-</span><span class='line'>      
-</span><span class='line'>      <span class="n">Task</span> <span class="o">*</span> <span class="n">currentTask</span> <span class="o">=</span> <span class="n">null</span><span class="p">;</span>
-</span><span class='line'>      <span class="c1">//run tasks </span>
-</span><span class='line'>      <span class="kt">bool</span> <span class="n">stop</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
-</span><span class='line'>      <span class="k">while</span><span class="p">(</span><span class="o">!</span><span class="n">stop</span><span class="p">){</span>
-</span><span class='line'>      
-</span><span class='line'>          <span class="n">operationsMutex</span><span class="p">.</span><span class="n">lock</span><span class="p">()</span>
-</span><span class='line'>          
-</span><span class='line'>          <span class="c1">//1.check taskQueue have pending task or not</span>
-</span><span class='line'>          <span class="k">while</span><span class="p">(</span><span class="o">!</span><span class="n">taskQueue</span><span class="p">.</span><span class="n">size</span><span class="p">()){</span>
-</span><span class='line'>              <span class="cm">/*这里使用while而不是if，是因为有可能存在多个</span>
-</span><span class='line'><span class="cm">             loopThread线程都在等待，但唤醒后，</span>
-</span><span class='line'><span class="cm">             只能有一个线程进行下面的执行，导致条件发生改变，</span>
-</span><span class='line'><span class="cm">             所以其他线程在接着执行时，任务需要条件判断一次。</span>
-</span><span class='line'><span class="cm">             这就是所谓的“惊群效应”*/</span>
-</span><span class='line'>              <span class="n">operationsCond</span><span class="p">.</span><span class="n">wait</span><span class="err">（</span><span class="n">operationsMutex</span><span class="err">）</span>
-</span><span class='line'>          <span class="p">}</span>
-</span><span class='line'>          
-</span><span class='line'>          <span class="c1">//2.get a task from queue</span>
-</span><span class='line'>          
-</span><span class='line'>          <span class="n">currentTask</span> <span class="o">=</span> <span class="n">popTask</span><span class="p">();</span>
-</span><span class='line'>          
-</span><span class='line'>          <span class="n">operationsMutex</span><span class="p">.</span><span class="n">unLock</span><span class="p">();</span>
-</span><span class='line'>      
-</span><span class='line'>          <span class="c1">//3.excute this task;</span>
-</span><span class='line'>          <span class="k">if</span><span class="p">(</span><span class="n">currentTask</span><span class="p">){</span>
-</span><span class='line'>              <span class="n">currentTask</span><span class="o">-&gt;</span><span class="n">run</span><span class="p">();</span>
-</span><span class='line'>          <span class="p">}</span>
-</span><span class='line'>      <span class="p">}</span>
-</span><span class='line'>    <span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h3>二. 互斥变量Mutex和条件变量Condition的使用场景</h3>
-
+<h3 id="mutexcondition">二. 互斥变量Mutex和条件变量Condition的使用场景</h3>
 <p>mutex和condition对象主要是pthread接口的封装，最终调用的POSIX api 如下：</p>
 
-<pre><code>//1.Mutex   
-pthread_mutex_init  
-pthread_mutex_lock  
-pthread_mutex_trylock  
-pthread_mutex_unlock
-ThreadCondition 
-//2.条件等待:  
-pthread_cond_init  
-pthread_cond_wait(&amp;conidtion,&amp;mutex);  
-phtread_cond_timewait     
-phtread_cond_signal 
-</code></pre>
+<div class="bogus-wrapper"><notextile><figure class="code"><div style="overflow-x:auto; overflow-y:hidden;"> <div class="CodeRay">
+  <div class="code"><pre>
+    <span class="comment">//1.Mutex   </span>
+    pthread_mutex_init  
+    pthread_mutex_lock  
+    pthread_mutex_trylock  
+    pthread_mutex_unlock
+    ThreadCondition 
+    <span class="comment">//2.条件等待:  </span>
+    pthread_cond_init  
+    pthread_cond_wait(&amp;conidtion,&amp;mutex);  
+    phtread_cond_timewait      
+    phtread_cond_signal    
+    </pre></div>
+</div>
+ </div> </figure></notextile></div>
 
-<h4>1. pthread_cond_wait()的使用过程说明</h4>
+<h4 id="pthreadcondwait">1. pthread_cond_wait()的使用过程说明</h4>
 
-<pre><code>pthread_mutex_lock(&amp;mutex);
-//对临界资源的操作 
-pthread_cond_wait(&amp;cond, &amp;mutex);
-//对临界资源的操作 
-pthread_mutex_unlock(&amp;mutex);
-</code></pre>
+<div class="bogus-wrapper"><notextile><figure class="code"><div style="overflow-x:auto; overflow-y:hidden;"> <div class="CodeRay">
+  <div class="code"><pre>  
+    pthread_mutex_lock(&amp;mutex);
+    <span class="comment">//对临界资源的操作 </span>
+    pthread_cond_wait(&amp;cond, &amp;mutex);
+    <span class="comment">//对临界资源的操作 </span>
+    pthread_mutex_unlock(&amp;mutex);
+    </pre></div>
+</div>
+ </div> </figure></notextile></div>
 
 <p>上面的代码<strong>锁</strong>的变化流程如下 :</p>
 
-<p>mutex.lock()&ndash;><strong>mutext.unlock()&mdash;>mutex.lock()</strong>&mdash;>mutext.unlock()</p>
+<p>mutex.lock()-&gt;<strong>mutext.unlock()–&gt;mutex.lock()</strong>–&gt;mutext.unlock()</p>
 
 <p>中间两步是在<code>pthread_cond_wait</code>中完成的。pthread_cond_wait把当前线程<strong>放入阻塞队列后</strong>，会进行一个<strong>mutex unlock</strong>释放锁，此后其他线程就可以访问临界资源了,例如这个临界资源可能是一个任务队列(也可是是其他条件变量)，其他线程就可以往任务队列里面添加新的任务。此时当前thread处于wait状态等待条件cond发生改变。当其他线程添加任务到队列后就会进行唤醒操作，<code>phtread_cond_signal(&amp;cond)</code>就唤醒了当前线程，当前线程在<strong>pthread_cond_wait返回前</strong>，里面会进行一个mutex lock操作以重新获取锁。</p>
 
-<h4>2. pthread_cond_wait()存在的“惊群效应”</h4>
-
+<h4 id="pthreadcondwait-1">2. pthread_cond_wait()存在的“惊群效应”</h4>
 <p>当有多个线程处于pthread_cond_wait等同一个cond时，当cond条件满足时，这个多个线程都可能被唤醒，但只有其中一个线程得到了锁（得到下面临界资源的执行权限)，其他线程等待。当该线程执行完毕后，临界资源的执行条件可能发生了改变（例如上述任务队列为空了），此时其他线程要往下执行的话需要再次判断条件，这里就使用了<code>while</code>循环。</p>
 
-<pre><code>pthread_mutex_lock(&amp;mutex);
-while(临界资源条件不满足){
-pthread_cond_wait(&amp;cond,&amp;mutex);
-}
-....
-..对临界资源的操作
-....
-phtread_mutext_unlock(&amp;mutex);  
-</code></pre>
+<div class="bogus-wrapper"><notextile><figure class="code"><div style="overflow-x:auto; overflow-y:hidden;"> <div class="CodeRay">
+  <div class="code"><pre>
+    pthread_mutex_lock(&amp;mutex);
+    <span class="keyword">while</span>(<span class="error">临</span><span class="error">界</span><span class="error">资</span><span class="error">源</span><span class="error">条</span><span class="error">件</span><span class="error">不</span><span class="error">满</span><span class="error">足</span>){
+    pthread_cond_wait(&amp;cond,&amp;mutex);
+    }
+    ....
+    ..<span class="error">对</span><span class="error">临</span><span class="error">界</span><span class="error">资</span><span class="error">源</span><span class="error">的</span><span class="error">操</span><span class="error">作</span>
+    ....
+    phtread_mutext_unlock(&amp;mutex);    
+    </pre></div>
+</div>
+ </div> </figure></notextile></div>
 
 <p>可以参考<a href="http://hi.baidu.com/yangyangye2008/item/454628450f8f7890833ae1a8">这里</a></p>
 
-<h3>三. 存在消息队列线程的使用案例</h3>
+<h3 id="section-1">三. 存在消息队列线程的使用案例</h3>
 
-<h4>1. thread线程类对外提供proxy接口</h4>
+<h4 id="threadproxy">1. thread线程类对外提供proxy接口</h4>
 
 <p>在thread线程类接口供外部使用时，建立一个ThreadProxy是一个良好的方式。</p>
 
 <p><a href="http://opensource.apple.com/source/WebCore/WebCore-1640.1/platform/graphics/chromium/cc/CCScopedThreadProxy.h">CCScopedThreadProxy</a>的设计：线程API通过创建一个proxy给外部线程使用，但线程自己可以关闭这个使用。下面可以停止某个外部对象(就是个threadproxy)使用当前的thread。
 <code>CCScopedThreadProxy::shutdown()</code></p>
 
-<figure class='code'><figcaption><span>CCScopedThreadProxy.h</span><a href='http://opensource.apple.com/source/WebCore/WebCore-1640.1/platform/graphics/chromium/cc/CCScopedThreadProxy.h'>link</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-<span class='line-number'>35</span>
-<span class='line-number'>36</span>
-<span class='line-number'>37</span>
-<span class='line-number'>38</span>
-<span class='line-number'>39</span>
-<span class='line-number'>40</span>
-<span class='line-number'>41</span>
-<span class='line-number'>42</span>
-<span class='line-number'>43</span>
-<span class='line-number'>44</span>
-<span class='line-number'>45</span>
-<span class='line-number'>46</span>
-<span class='line-number'>47</span>
-<span class='line-number'>48</span>
-<span class='line-number'>49</span>
-<span class='line-number'>50</span>
-<span class='line-number'>51</span>
-<span class='line-number'>52</span>
-<span class='line-number'>53</span>
-<span class='line-number'>54</span>
-<span class='line-number'>55</span>
-<span class='line-number'>56</span>
-<span class='line-number'>57</span>
-<span class='line-number'>58</span>
-<span class='line-number'>59</span>
-<span class='line-number'>60</span>
-<span class='line-number'>61</span>
-<span class='line-number'>62</span>
-<span class='line-number'>63</span>
-<span class='line-number'>64</span>
-<span class='line-number'>65</span>
-<span class='line-number'>66</span>
-</pre></td><td class='code'><pre><code class='cpp'><span class='line'><span class="cp">#ifndef CCScopedThreadProxy_h</span>
-</span><span class='line'><span class="cp">#define CCScopedThreadProxy_h</span>
-</span><span class='line'>
-</span><span class='line'><span class="cp">#include &quot;cc/CCProxy.h&quot;</span>
-</span><span class='line'><span class="cp">#include &quot;cc/CCThreadTask.h&quot;</span>
-</span><span class='line'><span class="cp">#include &lt;wtf/ThreadSafeRefCounted.h&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">namespace</span> <span class="n">WebCore</span> <span class="p">{</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1">// This class is a proxy used to post tasks to an target thread from any other thread. The proxy may be shut down at</span>
-</span><span class='line'><span class="c1">// any point from the target thread after which no more tasks posted to the proxy will run. In other words, all</span>
-</span><span class='line'><span class="c1">// tasks posted via a proxy are scoped to the lifecycle of the proxy. Use this when posting tasks to an object that</span>
-</span><span class='line'><span class="c1">// might die with tasks in flight.</span>
-</span><span class='line'><span class="c1">//</span>
-</span><span class='line'><span class="c1">// The proxy must be created and shut down from the target thread, tasks may be posted from any thread.</span>
-</span><span class='line'><span class="c1">//</span>
-</span><span class='line'><span class="c1">// Implementation note: Unlike ScopedRunnableMethodFactory in Chromium, pending tasks are not cancelled by actually</span>
-</span><span class='line'><span class="c1">// destroying the proxy. Instead each pending task holds a reference to the proxy to avoid maintaining an explicit</span>
-</span><span class='line'><span class="c1">// list of outstanding tasks.</span>
-</span><span class='line'><span class="k">class</span> <span class="nc">CCScopedThreadProxy</span> <span class="o">:</span> <span class="k">public</span> <span class="n">ThreadSafeRefCounted</span><span class="o">&lt;</span><span class="n">CCScopedThreadProxy</span><span class="o">&gt;</span> <span class="p">{</span>
-</span><span class='line'><span class="k">public</span><span class="o">:</span>
-</span><span class='line'>    <span class="k">static</span> <span class="n">PassRefPtr</span><span class="o">&lt;</span><span class="n">CCScopedThreadProxy</span><span class="o">&gt;</span> <span class="n">create</span><span class="p">(</span><span class="n">CCThread</span><span class="o">*</span> <span class="n">targetThread</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">{</span>
-</span><span class='line'>        <span class="n">ASSERT</span><span class="p">(</span><span class="n">currentThread</span><span class="p">()</span> <span class="o">==</span> <span class="n">targetThread</span><span class="o">-&gt;</span><span class="n">threadID</span><span class="p">());</span>
-</span><span class='line'>        <span class="k">return</span> <span class="n">adoptRef</span><span class="p">(</span><span class="k">new</span> <span class="n">CCScopedThreadProxy</span><span class="p">(</span><span class="n">targetThread</span><span class="p">));</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="c1">// Can be called from any thread. Posts a task to the target thread that runs unless</span>
-</span><span class='line'>    <span class="c1">// shutdown() is called before it runs.</span>
-</span><span class='line'>    <span class="kt">void</span> <span class="n">postTask</span><span class="p">(</span><span class="n">PassOwnPtr</span><span class="o">&lt;</span><span class="n">CCThread</span><span class="o">::</span><span class="n">Task</span><span class="o">&gt;</span> <span class="n">task</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">{</span>
-</span><span class='line'>        <span class="n">ref</span><span class="p">();</span>
-</span><span class='line'>        <span class="n">m_targetThread</span><span class="o">-&gt;</span><span class="n">postTask</span><span class="p">(</span><span class="n">createCCThreadTask</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">CCScopedThreadProxy</span><span class="o">::</span><span class="n">runTaskIfNotShutdown</span><span class="p">,</span> <span class="n">task</span><span class="p">));</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="kt">void</span> <span class="n">shutdown</span><span class="p">()</span>
-</span><span class='line'>    <span class="p">{</span>
-</span><span class='line'>        <span class="n">ASSERT</span><span class="p">(</span><span class="n">currentThread</span><span class="p">()</span> <span class="o">==</span> <span class="n">m_targetThread</span><span class="o">-&gt;</span><span class="n">threadID</span><span class="p">());</span>
-</span><span class='line'>        <span class="n">ASSERT</span><span class="p">(</span><span class="o">!</span><span class="n">m_shutdown</span><span class="p">);</span>
-</span><span class='line'>        <span class="n">m_shutdown</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">private</span><span class="o">:</span>
-</span><span class='line'>    <span class="k">explicit</span> <span class="n">CCScopedThreadProxy</span><span class="p">(</span><span class="n">CCThread</span><span class="o">*</span> <span class="n">targetThread</span><span class="p">)</span>
-</span><span class='line'>        <span class="o">:</span> <span class="n">m_targetThread</span><span class="p">(</span><span class="n">targetThread</span><span class="p">)</span>
-</span><span class='line'>        <span class="p">,</span> <span class="n">m_shutdown</span><span class="p">(</span><span class="kc">false</span><span class="p">)</span> <span class="p">{</span> <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="kt">void</span> <span class="n">runTaskIfNotShutdown</span><span class="p">(</span><span class="n">PassOwnPtr</span><span class="o">&lt;</span><span class="n">CCThread</span><span class="o">::</span><span class="n">Task</span><span class="o">&gt;</span> <span class="n">popTask</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">{</span>
-</span><span class='line'>        <span class="n">OwnPtr</span><span class="o">&lt;</span><span class="n">CCThread</span><span class="o">::</span><span class="n">Task</span><span class="o">&gt;</span> <span class="n">task</span> <span class="o">=</span> <span class="n">popTask</span><span class="p">;</span>
-</span><span class='line'>        <span class="c1">// If our shutdown flag is set, it&#39;s possible that m_targetThread has already been destroyed so don&#39;t</span>
-</span><span class='line'>        <span class="c1">// touch it.</span>
-</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">m_shutdown</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>            <span class="n">deref</span><span class="p">();</span>
-</span><span class='line'>            <span class="k">return</span><span class="p">;</span>
-</span><span class='line'>        <span class="p">}</span>
-</span><span class='line'>        <span class="n">ASSERT</span><span class="p">(</span><span class="n">currentThread</span><span class="p">()</span> <span class="o">==</span> <span class="n">m_targetThread</span><span class="o">-&gt;</span><span class="n">threadID</span><span class="p">());</span>
-</span><span class='line'>        <span class="n">task</span><span class="o">-&gt;</span><span class="n">performTask</span><span class="p">();</span>
-</span><span class='line'>        <span class="n">deref</span><span class="p">();</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">CCThread</span><span class="o">*</span> <span class="n">m_targetThread</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">bool</span> <span class="n">m_shutdown</span><span class="p">;</span> <span class="c1">// Only accessed on the target thread</span>
-</span><span class='line'><span class="p">};</span>
-</span><span class='line'><span class="p">}</span>
-</span><span class='line'><span class="cp">#endif</span>
-</span></code></pre></td></tr></table></div></figure>
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption class="code-header" style="margin-bottom:-5px;"><span>CCScopedThreadProxy.h</span><a href="http://opensource.apple.com/source/WebCore/WebCore-1640.1/platform/graphics/chromium/cc/CCScopedThreadProxy.h">linek </a></figcaption><div style="overflow-x:auto; overflow-y:hidden;"> <table class="CodeRay"><tr>
+  <td class="line-numbers"><pre><a href="#n1" name="n1">1</a>
+<a href="#n2" name="n2">2</a>
+<a href="#n3" name="n3">3</a>
+<a href="#n4" name="n4">4</a>
+<a href="#n5" name="n5">5</a>
+<a href="#n6" name="n6">6</a>
+<a href="#n7" name="n7">7</a>
+<a href="#n8" name="n8">8</a>
+<a href="#n9" name="n9">9</a>
+<strong><a href="#n10" name="n10">10</a></strong>
+<a href="#n11" name="n11">11</a>
+<a href="#n12" name="n12">12</a>
+<a href="#n13" name="n13">13</a>
+<a href="#n14" name="n14">14</a>
+<a href="#n15" name="n15">15</a>
+<a href="#n16" name="n16">16</a>
+<a href="#n17" name="n17">17</a>
+<a href="#n18" name="n18">18</a>
+<a href="#n19" name="n19">19</a>
+<strong><a href="#n20" name="n20">20</a></strong>
+<a href="#n21" name="n21">21</a>
+<a href="#n22" name="n22">22</a>
+<a href="#n23" name="n23">23</a>
+<a href="#n24" name="n24">24</a>
+<a href="#n25" name="n25">25</a>
+<a href="#n26" name="n26">26</a>
+<a href="#n27" name="n27">27</a>
+<a href="#n28" name="n28">28</a>
+<a href="#n29" name="n29">29</a>
+<strong><a href="#n30" name="n30">30</a></strong>
+<a href="#n31" name="n31">31</a>
+<a href="#n32" name="n32">32</a>
+<a href="#n33" name="n33">33</a>
+<a href="#n34" name="n34">34</a>
+<a href="#n35" name="n35">35</a>
+<a href="#n36" name="n36">36</a>
+<a href="#n37" name="n37">37</a>
+<a href="#n38" name="n38">38</a>
+<a href="#n39" name="n39">39</a>
+<strong><a href="#n40" name="n40">40</a></strong>
+<a href="#n41" name="n41">41</a>
+<a href="#n42" name="n42">42</a>
+<a href="#n43" name="n43">43</a>
+<a href="#n44" name="n44">44</a>
+<a href="#n45" name="n45">45</a>
+<a href="#n46" name="n46">46</a>
+<a href="#n47" name="n47">47</a>
+<a href="#n48" name="n48">48</a>
+<a href="#n49" name="n49">49</a>
+<strong><a href="#n50" name="n50">50</a></strong>
+<a href="#n51" name="n51">51</a>
+<a href="#n52" name="n52">52</a>
+<a href="#n53" name="n53">53</a>
+<a href="#n54" name="n54">54</a>
+<a href="#n55" name="n55">55</a>
+<a href="#n56" name="n56">56</a>
+<a href="#n57" name="n57">57</a>
+<a href="#n58" name="n58">58</a>
+<a href="#n59" name="n59">59</a>
+<strong><a href="#n60" name="n60">60</a></strong>
+<a href="#n61" name="n61">61</a>
+<a href="#n62" name="n62">62</a>
+<a href="#n63" name="n63">63</a>
+<a href="#n64" name="n64">64</a>
+<a href="#n65" name="n65">65</a>
+<a href="#n66" name="n66">66</a>
+<a href="#n67" name="n67">67</a>
+</pre></td>
+  <td class="code"><pre> 
+<span class="preprocessor">#ifndef</span> CCScopedThreadProxy_h
+<span class="preprocessor">#define</span> CCScopedThreadProxy_h
 
+<span class="preprocessor">#include</span> <span class="include">&quot;cc/CCProxy.h&quot;</span>
+<span class="preprocessor">#include</span> <span class="include">&quot;cc/CCThreadTask.h&quot;</span>
+<span class="preprocessor">#include</span> <span class="include">&lt;wtf/ThreadSafeRefCounted.h&gt;</span>
 
-<h4>2. 简单的线程队列案例:</h4>
+<span class="keyword">namespace</span> WebCore {
 
-<ul>
-<li>chromium <a href="http://www.opensource.apple.com/source/WebCore/WebCore-1298.39/platform/graphics/chromium/cc/CCThread.cpp">CCThread</a></li>
-<li>android42 <a href="https://android.googlesource.com/platform/external/webkit/+/42326004062d6b846c3050ad03a1e80fa9db425c/Source/WebCore/platform/graphics/android/rendering/TexturesGenerator.cpp">webkit TexturesGenerator.cpp的实现</a></li>
-</ul>
+<span class="comment">// This class is a proxy used to post tasks to an target thread from any other thread. The proxy may be shut down at</span>
+<span class="comment">// any point from the target thread after which no more tasks posted to the proxy will run. In other words, all</span>
+<span class="comment">// tasks posted via a proxy are scoped to the lifecycle of the proxy. Use this when posting tasks to an object that</span>
+<span class="comment">// might die with tasks in flight.</span>
+<span class="comment">//</span>
+<span class="comment">// The proxy must be created and shut down from the target thread, tasks may be posted from any thread.</span>
+<span class="comment">//</span>
+<span class="comment">// Implementation note: Unlike ScopedRunnableMethodFactory in Chromium, pending tasks are not cancelled by actually</span>
+<span class="comment">// destroying the proxy. Instead each pending task holds a reference to the proxy to avoid maintaining an explicit</span>
+<span class="comment">// list of outstanding tasks.</span>
+<span class="keyword">class</span> <span class="class">CCScopedThreadProxy</span> : <span class="directive">public</span> ThreadSafeRefCounted&lt;CCScopedThreadProxy&gt; {
+<span class="directive">public</span>:
+    <span class="directive">static</span> PassRefPtr&lt;CCScopedThreadProxy&gt; create(CCThread* targetThread)
+    {
+        ASSERT(currentThread() == targetThread-&gt;threadID());
+        <span class="keyword">return</span> adoptRef(<span class="keyword">new</span> CCScopedThreadProxy(targetThread));
+    }
+    
+    <span class="comment">// Can be called from any thread. Posts a task to the target thread that runs unless</span>
+    <span class="comment">// shutdown() is called before it runs.</span>
+    <span class="directive">void</span> postTask(PassOwnPtr&lt;CCThread::Task&gt; task)
+    {
+        ref();
+        m_targetThread-&gt;postTask(createCCThreadTask(<span class="local-variable">this</span>, &amp;CCScopedThreadProxy::runTaskIfNotShutdown, task));
+    }
+    
+    <span class="directive">void</span> shutdown()
+    {
+        ASSERT(currentThread() == m_targetThread-&gt;threadID());
+        ASSERT(!m_shutdown);
+        m_shutdown = <span class="predefined-constant">true</span>;
+    }
 
+<span class="directive">private</span>:
+    <span class="directive">explicit</span> CCScopedThreadProxy(CCThread* targetThread)
+        : m_targetThread(targetThread)
+        , m_shutdown(<span class="predefined-constant">false</span>) { }
 
-<h4>3. 参考</h4>
+    <span class="directive">void</span> runTaskIfNotShutdown(PassOwnPtr&lt;CCThread::Task&gt; popTask)
+    {
+        OwnPtr&lt;CCThread::Task&gt; task = popTask;
+        <span class="comment">// If our shutdown flag is set, it's possible that m_targetThread has already been destroyed so don't</span>
+        <span class="comment">// touch it.</span>
+        <span class="keyword">if</span> (m_shutdown) {
+            deref();
+            <span class="keyword">return</span>;
+        }
+        ASSERT(currentThread() == m_targetThread-&gt;threadID());
+        task-&gt;performTask();
+        deref();
+    }
+
+    CCThread* m_targetThread;
+    <span class="predefined-type">bool</span> m_shutdown; <span class="comment">// Only accessed on the target thread</span>
+};
+}
+<span class="preprocessor">#endif</span>
+</pre></td>
+</tr></table>
+ </div> </figure></notextile></div>
+
+<h4 id="section-2">2. 简单的线程队列案例:</h4>
 
 <ul>
-<li>chromium <a href="https://gitorious.org/webkit-clutter/webkit-clutter/source/804b17d000553df4f01db334f97c9bd01e416716:Source/WebCore/platform/graphics/chromium/cc/CCThreadProxy.cpp#L82-348">CCThreadProxy</a></li>
-<li>chromium <a href="http://opensource.apple.com/source/WebCore/WebCore-1640.1/platform/graphics/chromium/cc/CCScopedThreadProxy.h">CCScopedThreadProxy</a></li>
+  <li>chromium <a href="http://www.opensource.apple.com/source/WebCore/WebCore-1298.39/platform/graphics/chromium/cc/CCThread.cpp">CCThread</a></li>
+  <li>android42 <a href="https://android.googlesource.com/platform/external/webkit/+/42326004062d6b846c3050ad03a1e80fa9db425c/Source/WebCore/platform/graphics/android/rendering/TexturesGenerator.cpp">webkit TexturesGenerator.cpp的实现</a></li>
 </ul>
 
+<h4 id="section-3">3. 参考</h4>
+<ul>
+  <li>chromium <a href="https://gitorious.org/webkit-clutter/webkit-clutter/source/804b17d000553df4f01db334f97c9bd01e416716:Source/WebCore/platform/graphics/chromium/cc/CCThreadProxy.cpp#L82-348">CCThreadProxy</a></li>
+  <li>chromium <a href="http://opensource.apple.com/source/WebCore/WebCore-1640.1/platform/graphics/chromium/cc/CCScopedThreadProxy.h">CCScopedThreadProxy</a></li>
+</ul>
 ]]></content>
   </entry>
   
@@ -378,34 +390,29 @@ phtread_mutext_unlock(&amp;mutex);
     <link href="http://www.ikitweb.com/blog/2014/04/11/install-ocotpress-on-mac-and-host-website-on-github/"/>
     <updated>2014-04-11T19:03:24+08:00</updated>
     <id>http://www.ikitweb.com/blog/2014/04/11/install-ocotpress-on-mac-and-host-website-on-github</id>
-    <content type="html"><![CDATA[<p>  <em>Octopress</em>需要<strong>ruby 1.9.3</strong>，而我mac系统安装的ruby是2.1的，此外Octopress还需要bundle安装自己的依赖gem包。一开始我想着直接用mac上ruby2.1，结果在执行<code>gem install bundle</code>时，发现之下的错误：</p>
+    <content type="html"><![CDATA[<p><em>Octopress</em>需要<strong>ruby 1.9.3</strong>，而我mac系统安装的ruby是2.1的，此外Octopress还需要bundle安装自己的依赖gem包。一开始我想着直接用mac上ruby2.1，结果在执行<code>gem install bundle</code>时，发现之下的错误：</p>
 
-<blockquote><p>ERROR:  While executing gem &hellip; >(Gem::FilePermissionError)
-You don&rsquo;t have write permissions for the /Library/Ruby/>Gems/2.1.0 directory.</p></blockquote>
+<blockquote>
+  <p>ERROR:  While executing gem … &gt;(Gem::FilePermissionError)
+You don’t have write permissions for the /Library/Ruby/&gt;Gems/2.1.0 directory.</p>
+</blockquote>
 
-<p>这个提示的意思：</p>
+<p>这个提示的意思：
+&gt;You don’t have write permissions into the /Library/Ruby/Gems/2.1.0 directory.</p>
 
-<blockquote><p>You don&rsquo;t have write permissions into the /Library/Ruby/Gems/2.1.0 directory.</p></blockquote>
-
-<p>这是OSX自己安装的ruby版本，不允许自行安装其他的安装包。stackOverFlow有相关<a href="http://stackoverflow.com/questions/14607193/installing-gem-or-updating-rubygems-fails-with-permissions-error">说明</a>,所以我又回到老路上－》<strong>安装ruby1.9.3</strong>,下面是过程：</p>
-
+<p>这是OSX自己安装的ruby版本，不允许自行安装其他的安装包。stackOverFlow有相关<a href="http://stackoverflow.com/questions/14607193/installing-gem-or-updating-rubygems-fails-with-permissions-error">说明</a>,所以我又回到老路上－》<strong>安装ruby1.9.3</strong>,下面是过程：
 <!--more-->
-
-
-<h3>一. 更新安装Xcode command line tools</h3>
-
-<p>xcode-tools所在目录安装的目录<code>/library/developer/CommandLineTools</code></p>
+### 一. 更新安装Xcode command line tools
+xcode-tools所在目录安装的目录<code>/library/developer/CommandLineTools</code></p>
 
 <p>安装方法有两种:</p>
 
 <ul>
-<li>xcode-select &mdash; install</li>
-<li>直接<a href="https://developer.apple.com/downloads/index.action?name=for%20Xcode%20-#">下载</a>安装也可以</li>
+  <li>xcode-select – install</li>
+  <li>直接<a href="https://developer.apple.com/downloads/index.action?name=for%20Xcode%20-#">下载</a>安装也可以</li>
 </ul>
 
-
-<h3>二. 安装Homebrew</h3>
-
+<h3 id="homebrew">二. 安装Homebrew</h3>
 <p><a href="http://brew.sh/index_zh-cn.html">Homebrew</a> OSX安装软件一种方法，相当于unbuntu上的apt-get,与macports的工作原理差不多。都是通过在命令行上安装软件，比较方便。Homebrew是尽量先在查找本地的依赖库，再进行下载包源码代码进行编译安装，而macports是下载所有的依赖库的源码进行编译安装。RVM在安装过中依赖一些包需要Homebrew去下载安装，</p>
 
 <pre><code>ruby -e "$(curl -fsSL https://raw.github.com/mxcl/homebrew/go/install)"
@@ -413,39 +420,35 @@ You don&rsquo;t have write permissions for the /Library/Ruby/>Gems/2.1.0 directo
 
 <p>输入命令下载，按照提示一路回车和输入密码即可。安装过程可以参照这篇文章<a href="http://www.pcdailytips.com/how-i-install-homebrew-on-mavericks-mac-os/">How I Install Homebrew on Mavericks Mac OS</a></p>
 
-<h3>三. 安装RVM</h3>
-
+<h3 id="rvm">三. 安装RVM</h3>
 <p><a href="https://rvm.io"><strong>RVM</strong></a>（Ruby Version Manager）,安装好了rvm就可以很方便的安装1.9.3以及切换OSX 使用什么版本的ruby。
-安装命令：</p>
-
-<pre><code>curl -L https://get.rvm.io | bash -s stable --ruby
-</code></pre>
+安装命令：
+	curl -L https://get.rvm.io | bash -s stable –ruby</p>
 
 <p>rvm安装完成之后，调用</p>
 
-<pre><code>rvm requirements
+<pre><code>rvm requirements 然后可能出现各种错误，大致原因是某些依赖库没有被装上，例如
 </code></pre>
 
-<p>然后可能出现各种错误，大致原因是某些依赖库没有被装上，例如</p>
+<blockquote>
+  <p>Error running ‘requirements_osx_brew_libs_install autoconf automake libtool pkg-config apple-gcc42 libyaml readline libxml2 libxslt libksba openssl sqlite’,</p>
+</blockquote>
 
-<blockquote><p>Error running &lsquo;requirements_osx_brew_libs_install autoconf automake libtool pkg-config apple-gcc42 libyaml readline libxml2 libxslt libksba openssl sqlite&rsquo;,</p>
-
-<p>please read /Users/allegrascrugham/.rvm/log/ruby-1.9.3-p392/1368142352_package_install_autoconf_automake_libtool_pkg-config_apple-gcc42_libyaml_readline_libxml2_libxslt_libksba_openssl_sqlite.log</p></blockquote>
+<blockquote>
+  <p>please read /Users/allegrascrugham/.rvm/log/ruby-1.9.3-p392/1368142352_package_install_autoconf_automake_libtool_pkg-config_apple-gcc42_libyaml_readline_libxml2_libxslt_libksba_openssl_sqlite.log</p>
+</blockquote>
 
 <p>这里原则是缺啥补啥，brew的用处来了，通过<code>brew install</code>安装缺失的安装包，stackOverFlow上也有相关<a href="http://stackoverflow.com/questions/16473115/error-running-requirements-osx-brew-libs-install-on-mac-10-7">说明</a>。
 上面可能需要反复调用<code>rvm reuirements</code>以及brew install依赖包直到没有错误。</p>
 
-<h3>四. 安装ruby1.9.3</h3>
-
+<h3 id="ruby193">四. 安装ruby1.9.3</h3>
 <p>在rvm安装完成之后，就可以安装和使用1.9.3了</p>
 
 <pre><code>rvm install 1.9.3
-rvm use 1.9.3 --default
+rvm use 1.9.3 --default ruby1.9.3是安装在～/.rvm/gems下, `rvm use 1.9.3`需要加上`--default`,意识是说使用ruby1.9.3 作为默认的版本。否则当前terminal退出后，再打开terminal 输入`ruby --version`，会发现还是之前系统的ruby版本2.1.0.
 </code></pre>
 
-<p>ruby1.9.3是安装在～/.rvm/gems下, <code>rvm use 1.9.3</code>需要加上<code>--default</code>,意识是说使用ruby1.9.3 作为默认的版本。否则当前terminal退出后，再打开terminal 输入<code>ruby --version</code>，会发现还是之前系统的ruby版本2.1.0.</p>
-
-<h3>五. 安装octopress预览博客</h3>
+<h3 id="octopress">五. 安装octopress预览博客</h3>
 
 <p>下面是本地安装过程</p>
 
@@ -455,55 +458,65 @@ gem install bundler //使用gem安装bundler
 bundle install      //使用bundle为Octopress安装依赖的gem包
 rake install        //安装默认主题classic
 rake generate       //生成页面
-rake preview         //进入预览
+rake preview		 //进入预览
 </code></pre>
 
 <p>此时打开浏览器输入localhost:4000,就可以看生成的博客了。</p>
 
-<h3>六. github建立版本仓库</h3>
-
+<h3 id="github">六. github建立版本仓库</h3>
 <p>在<a href="www.github.com">github</a>注册登录之后，建立版本仓库，Reposity name必须是username.github.com，这样的格式(username可以是任何名称),这里是<a href="http://blog.csdn.net/jackystudio/article/details/16334861">参考</a></p>
 
-<p><img class="center" src="http://www.ikitweb.com/images/2014-4/addrepos.png"></p>
+<p><img class="center" src="http://www.ikitweb.com/images/2014-4/addrepos.png" /></p>
 
-<h3>七. git与github打通</h3>
+<h3 id="gitgithub">七. git与github打通</h3>
 
 <p>在github创建好版本仓库之后，得要在本地通过git访问。github可以通过ssh验证来实现这点。具体来说我们在本地通过ssh生成一对密钥，我们本地保存有私钥，把公钥给github。<a href="http://blog.csdn.net/jackystudio/article/details/12271877">参考</a></p>
 
 <ol>
-<li><p>ssh生成密钥得方法</p>
+  <li>
+    <p>ssh生成密钥得方法</p>
 
-<blockquote><p>ssh-keygen -t rsa -C &ldquo;<a href="&#x6d;&#x61;&#105;&#108;&#x74;&#x6f;&#58;&#x59;&#x6f;&#117;&#x72;&#x45;&#x6d;&#x61;&#105;&#x6c;&#64;&#x65;&#x78;&#97;&#x6d;&#112;&#x6c;&#101;&#46;&#99;&#111;&#109;">&#x59;&#x6f;&#x75;&#114;&#69;&#109;&#97;&#x69;&#x6c;&#64;&#x65;&#120;&#97;&#109;&#x70;&#x6c;&#101;&#46;&#99;&#111;&#x6d;</a>&rdquo;</p></blockquote></li>
+    <blockquote>
+      <p>ssh-keygen -t rsa -C “YourEmail@example.com”</p>
+    </blockquote>
+  </li>
 </ol>
 
-
-<p><img class="center" src="http://www.ikitweb.com/images/2014-4/sshkeygen.png" width="700" height="300"></p>
+<p><img class="center" src="http://www.ikitweb.com/images/2014-4/sshkeygen.png" width="700" height="300" /></p>
 
 <p>结果在～/.ssh下,id_rsa.pub就是公钥
-<img class="center" src="http://www.ikitweb.com/images/2014-4/idrsa_pub.png"></p>
+<img class="center" src="http://www.ikitweb.com/images/2014-4/idrsa_pub.png" /></p>
 
 <ol>
-<li><p>把公钥给github。
-登录github－>右上角accout settings->SSH keys->add SSH key.把id_rsa.pub得内容复制粘贴，Title随意。
-<img class="center" src="http://www.ikitweb.com/images/2014-4/addshhkey.png"></p></li>
-<li><p>客户端验证与github是否打通</p></li>
+  <li>
+    <p>把公钥给github。
+登录github－&gt;右上角accout settings-&gt;SSH keys-&gt;add SSH key.把id_rsa.pub得内容复制粘贴，Title随意。
+<img class="center" src="http://www.ikitweb.com/images/2014-4/addshhkey.png" /></p>
+  </li>
+  <li>
+    <p>客户端验证与github是否打通</p>
+  </li>
 </ol>
 
-
-<blockquote><p>ssh -T <a href="&#109;&#x61;&#105;&#108;&#116;&#111;&#58;&#103;&#105;&#116;&#x40;&#x67;&#105;&#x74;&#x68;&#117;&#x62;&#x2e;&#x63;&#111;&#109;">&#x67;&#105;&#116;&#64;&#103;&#105;&#116;&#104;&#x75;&#x62;&#46;&#99;&#x6f;&#x6d;</a></p></blockquote>
+<blockquote>
+  <p>ssh -T git@github.com</p>
+</blockquote>
 
 <p>我得得到如下结果:
-<img class="center" src="http://www.ikitweb.com/images/2014-4/ssht.png"></p>
+<img class="center" src="http://www.ikitweb.com/images/2014-4/ssht.png" /></p>
 
-<h3>八. 把Octopress博客发布到github</h3>
+<h3 id="octopressgithub">八. 把Octopress博客发布到github</h3>
 
 <p>在我们在打算把博客发布到github上，分为两个部分</p>
 
 <ol>
-<li><p>Octopress源码，这个打算放到git@github.com:username/ username.github.com.git的<strong>source分支</strong></p></li>
-<li><p>Octopress 在ruby环境中生成的博客本身的html代码，个打算放到git@github.com:username/ username.github.com.git的<strong>master分支</strong></p></li>
+  <li>
+    <p>Octopress源码，这个打算放到git@github.com:username/ username.github.com.git的<strong>source分支</strong></p>
+  </li>
+  <li>
+    <p>Octopress 在ruby环境中生成的博客本身的html代码，个打算放到git@github.com:username/ username.github.com.git的<strong>master分支</strong></p>
+  </li>
 </ol>
-
 
 <p>完成了5.6.三两步之后，在这里要把代码上传到github，进入<strong>Octopress目录</strong>
 运行下面得ruby命令，推送页面到github上去。</p>
@@ -514,13 +527,18 @@ rake preview         //进入预览
 <p>这个命令中，需要填入版本仓库得地址，例如git@github.com:username/ username.github.com.git(git协议地址，username替换成你注册得),输入密码等。这里已完成了三件事情：</p>
 
 <ol>
-<li><p>在当前版本库（注意当前还是clone得Octopress的版本库）添加remote：git@github.com:username/ username.github.com.git作为origin</p></li>
-<li><p>把当前版本库分支得名称由<code>master</code> 改成<code>source</code>(这个目录将要提交到git版本库的source分支)</p></li>
-<li><p>建立_deploy目录，并在该目录下初始化一个git版本库(这里是博客页面，将要提交到git版本库的master分支)</p></li>
+  <li>
+    <p>在当前版本库（注意当前还是clone得Octopress的版本库）添加remote：git@github.com:username/ username.github.com.git作为origin</p>
+  </li>
+  <li>
+    <p>把当前版本库分支得名称由<code>master</code> 改成<code>source</code>(这个目录将要提交到git版本库的source分支)</p>
+  </li>
+  <li>
+    <p>建立_deploy目录，并在该目录下初始化一个git版本库(这里是博客页面，将要提交到git版本库的master分支)</p>
+  </li>
 </ol>
 
-
-<p><img class="center" src="http://www.ikitweb.com/images/2014-4/setup_github_pages.png"></p>
+<p><img class="center" src="http://www.ikitweb.com/images/2014-4/setup_github_pages.png" /></p>
 
 <p><strong>发布博客：</strong></p>
 
@@ -536,49 +554,46 @@ git push origin source
 //，此后你可以独立修改Octorress了。
 </code></pre>
 
-<h3>九. 克隆博客</h3>
-
+<h3 id="section">九. 克隆博客</h3>
 <p>换了台机器，想把自己前面上传的源码领取下来，在这台机器上工作继续写博客，先把第7步执行下，保证由访问github版本库的权限。<a href="http://blog.csdn.net/jackystudio/article/details/16800331">参考</a>
 主要过程如下:</p>
 
 <ol>
-<li>mkdir Octopress</li>
-<li>cd Octopress</li>
-<li>git init</li>
-<li>git remote add origin yourrepoUrl</li>
-<li>git pull origin source //拉取octorpess源码</li>
-<li>git branch -m &ldquo;master&rdquo; &ldquo;source&rdquo; //把当前分支重命令</li>
-<li>rake setup_github_papes 生成发布的目录_deploy</li>
-<li>cd _deploy</li>
-<li>git pull origin master//拉取博客的网页源码</li>
-<li>cd ..</li>
-<li>rake genereate//由Octopress 生成博客页面代码 到_deploy目录</li>
-<li>rake preview</li>
+  <li>mkdir Octopress</li>
+  <li>cd Octopress</li>
+  <li>git init</li>
+  <li>git remote add origin yourrepoUrl</li>
+  <li>git pull origin source //拉取octorpess源码</li>
+  <li>git branch -m “master” “source” //把当前分支重命令</li>
+  <li>rake setup_github_papes 生成发布的目录_deploy</li>
+  <li>cd _deploy</li>
+  <li>git pull origin master//拉取博客的网页源码</li>
+  <li>cd ..</li>
+  <li>rake genereate//由Octopress 生成博客页面代码 到_deploy目录</li>
+  <li>rake preview</li>
 </ol>
-
 
 <p>这里说明下，与第8步<code>把Octopress博客发布到github</code>不同的是，这里没有使用<strong>git clone</strong>的方法，主要原因是git clone 会把版本库的<strong>master分支</strong>(这里是博客网页源码)放到当前的目录(比如我们建立的Octopress文件夹)，而我们需要当前目录存放的是<em>Octorpress的源码</em>,
 所以才采用git remote add 以及git pull origin source等等。这里由<a href="http://stackoverflow.com/questions/4855561/difference-between-git-remote-add-and-git-clone">stackOverflow的解释</a>。　</p>
 
 <p>下面是我操作过程的截图:
-<img class="center" src="http://www.ikitweb.com/images/2014-4/cloneblog1.png">
+<img class="center" src="http://www.ikitweb.com/images/2014-4/cloneblog1.png" />
 还有一点:
-<img class="center" src="http://www.ikitweb.com/images/2014-4/cloneblog2.png"></p>
+<img class="center" src="http://www.ikitweb.com/images/2014-4/cloneblog2.png" /></p>
 
-<h3>十. Octopress目录分析</h3>
-
+<h3 id="octopress-1">十. Octopress目录分析</h3>
 <p>这个放到下一篇了。。。。先到这里</p>
 
-<p>[参考]</p>
+<p>[参考] </p>
 
 <ul>
-<li><a href="http://blog.csdn.net/jackystudio/article/details/16367937">像黑客一样写博客</a></li>
-<li><a href="http://www.pcdailytips.com/install-octopress-on-mac-mavericks-using-rvm/">Install Octopress on Mac Mavericks Using RVM</a></li>
-<li><a href="http://www.moncefbelyamani.com/how-to-install-xcode-homebrew-git-rvm-ruby-on-mac/">How to Install Xcode, Homebrew, Git, RVM, Ruby &amp; Rails on Snow Leopard, Lion, and Mountain Lion</a></li>
-<li><a href="http://octopress.org/docs/setup/">Octopress Setup</a></li>
-<li><a href="http://www.moncefbelyamani.com/how-to-install-and-configure-octopress-on-a-mac/">How to Install &amp; Configure Octopress on a Mac, and
+  <li><a href="http://blog.csdn.net/jackystudio/article/details/16367937">像黑客一样写博客</a></li>
+  <li><a href="http://www.pcdailytips.com/install-octopress-on-mac-mavericks-using-rvm/">Install Octopress on Mac Mavericks Using RVM</a></li>
+  <li><a href="http://www.moncefbelyamani.com/how-to-install-xcode-homebrew-git-rvm-ruby-on-mac/">How to Install Xcode, Homebrew, Git, RVM, Ruby &amp; Rails on Snow Leopard, Lion, and Mountain Lion</a></li>
+  <li><a href="http://octopress.org/docs/setup/">Octopress Setup</a></li>
+  <li><a href="http://www.moncefbelyamani.com/how-to-install-and-configure-octopress-on-a-mac/">How to Install &amp; Configure Octopress on a Mac, and 
 Host Your Static Website on Amazon S3</a></li>
-<li><a href="http://www.pcdailytips.com/how-i-install-homebrew-on-mavericks-mac-os/">How I Install Homebrew on Mavericks Mac OS</a></li>
+  <li><a href="http://www.pcdailytips.com/how-i-install-homebrew-on-mavericks-mac-os/">How I Install Homebrew on Mavericks Mac OS</a></li>
 </ul>
 
 ]]></content>
@@ -589,26 +604,23 @@ Host Your Static Website on Amazon S3</a></li>
     <link href="http://www.ikitweb.com/blog/2014/02/15/i-kit-web/"/>
     <updated>2014-02-15T12:50:49+08:00</updated>
     <id>http://www.ikitweb.com/blog/2014/02/15/i-kit-web</id>
-    <content type="html"><![CDATA[<p> This is <strong>ianwang</strong>&rsquo;s blog. Why site&rsquo;s domian name is <a href="http://www.ikitweb.com">http://www.ikitweb.com</a> ?<br/>
- it means &ldquo;i kit web&rdquo; from words. &ldquo;kitweb&rdquo;,reverse it would be <a href="http://www.webkit.org">webkit</a>,yes,webkit is my work areas.<br/>
-<img src="http://www.webkit.org/images/icon-gold.png" alt="webkit log" /></p>
-
+    <content type="html"><![CDATA[<p>This is <strong>ianwang</strong>’s blog. Why site’s domian name is <a href="http://www.ikitweb.com">http://www.ikitweb.com</a> ?<br />
+ it means “i kit web” from words. “kitweb”,reverse it would be <a href="http://www.webkit.org">webkit</a>,yes,webkit is my work areas.<br />
+<img src="http://www.webkit.org/images/icon-gold.png" alt="webkit log" /><br />
 <!--more-->
-
-
-<p> In recent years,I&rsquo;m majoring in mobile browser development in <strong>Tencent</strong>, <strong>webkit</strong> is our rendering engine, my work is optimize webkit for mobile platform, such as page rendering and moblile network optmize,etc. so I&rsquo;ll mainly talk about these, include followings:</p>
+ In recent years,I’m majoring in mobile browser development in <strong>Tencent</strong>, <strong>webkit</strong> is our rendering engine, my work is optimize webkit for mobile platform, such as page rendering and moblile network optmize,etc. so I’ll mainly talk about these, include followings:</p>
 
 <ul>
-<li>webkit &amp; blink research in mobile platform</li>
-<li>mobile app development</li>
-<li>browser rendering technical</li>
-<li>mobile network optmize.</li>
+  <li>webkit &amp; blink research in mobile platform</li>
+  <li>mobile app development </li>
+  <li>browser rendering technical</li>
+  <li>mobile network optmize.</li>
 </ul>
 
+<p>I kit web,so my blog focus on web relatvie development. mobile browser,mobile web page ,mobile site architecture.mobile app. </p>
 
-<p>I kit web,so my blog focus on web relatvie development. mobile browser,mobile web page ,mobile site architecture.mobile app.</p>
+<h3 id="lets-kit-mobile-world"><em>let’s kit mobile world!</em></h3>
 
-<h3><em>let&rsquo;s kit mobile world!</em></h3>
 ]]></content>
   </entry>
   

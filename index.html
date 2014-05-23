@@ -9,10 +9,7 @@
   <meta name="author" content="ianwang">
 
   
-  <meta name="description" content="一. 实现一个有消息队列的线程 大概有以下接口： 添加任务到消息队列: addTask
-从消息队列中获取任务: popTask
-执行这个任务
-要实现一个线程的循环体:threadRunloop. 上述操作是在多个线程中执行的，例如addTask可以由任何一个线程执行。
+  <meta name="description" content="一. 实现一个有消息队列的线程 大概有以下接口： 添加任务到消息队列: addTask 从消息队列中获取任务: popTask 执行这个任务 要实现一个线程的循环体:threadRunloop. 上述操作是在多个线程中执行的，例如addTask可以由任何一个线程执行。
 而popTask， &hellip;">
   
 
@@ -101,23 +98,21 @@
   </header>
 
 
-  <div class="entry-content"><h3>一. 实现一个有消息队列的线程</h3>
+  <div class="entry-content"><h3 id="section">一. 实现一个有消息队列的线程</h3>
 
-<p>大概有以下接口：</p>
+<p>大概有以下接口：  </p>
 
 <ul>
-<li>添加任务到消息队列: addTask</li>
-<li>从消息队列中获取任务: popTask</li>
-<li>执行这个任务</li>
-<li>要实现一个线程的循环体:threadRunloop.</li>
+  <li>添加任务到消息队列: addTask</li>
+  <li>从消息队列中获取任务: popTask </li>
+  <li>执行这个任务</li>
+  <li>要实现一个线程的循环体:threadRunloop.</li>
 </ul>
-
 
 <p>上述操作是在多个线程中执行的，例如addTask可以由任何一个线程执行。
 而popTask，threadRunloop只在当前线程执行。</p>
 
-<p>MessageQueue的实现重要的一点：<strong>要保证对消息队列操作的同步和互斥</strong>.在linux中，就涉及到两个技术点取实现，一个是互斥变量Mute，一个是信号量Condition:</p>
-
+<p>MessageQueue的实现重要的一点：<strong>要保证对消息队列操作的同步和互斥</strong>.在linux中，就涉及到两个技术点取实现，一个是互斥变量Mute，一个是信号量Condition:
 </div>
   
   
@@ -160,17 +155,17 @@
   </header>
 
 
-  <div class="entry-content"><p>  <em>Octopress</em>需要<strong>ruby 1.9.3</strong>，而我mac系统安装的ruby是2.1的，此外Octopress还需要bundle安装自己的依赖gem包。一开始我想着直接用mac上ruby2.1，结果在执行<code>gem install bundle</code>时，发现之下的错误：</p>
+  <div class="entry-content"><p><em>Octopress</em>需要<strong>ruby 1.9.3</strong>，而我mac系统安装的ruby是2.1的，此外Octopress还需要bundle安装自己的依赖gem包。一开始我想着直接用mac上ruby2.1，结果在执行<code>gem install bundle</code>时，发现之下的错误：</p>
 
-<blockquote><p>ERROR:  While executing gem &hellip; >(Gem::FilePermissionError)
-You don&rsquo;t have write permissions for the /Library/Ruby/>Gems/2.1.0 directory.</p></blockquote>
+<blockquote>
+  <p>ERROR:  While executing gem … &gt;(Gem::FilePermissionError)
+You don’t have write permissions for the /Library/Ruby/&gt;Gems/2.1.0 directory.</p>
+</blockquote>
 
-<p>这个提示的意思：</p>
+<p>这个提示的意思：
+&gt;You don’t have write permissions into the /Library/Ruby/Gems/2.1.0 directory.</p>
 
-<blockquote><p>You don&rsquo;t have write permissions into the /Library/Ruby/Gems/2.1.0 directory.</p></blockquote>
-
-<p>这是OSX自己安装的ruby版本，不允许自行安装其他的安装包。stackOverFlow有相关<a href="http://stackoverflow.com/questions/14607193/installing-gem-or-updating-rubygems-fails-with-permissions-error">说明</a>,所以我又回到老路上－》<strong>安装ruby1.9.3</strong>,下面是过程：</p>
-
+<p>这是OSX自己安装的ruby版本，不允许自行安装其他的安装包。stackOverFlow有相关<a href="http://stackoverflow.com/questions/14607193/installing-gem-or-updating-rubygems-fails-with-permissions-error">说明</a>,所以我又回到老路上－》<strong>安装ruby1.9.3</strong>,下面是过程：
 </div>
   
   
@@ -213,10 +208,9 @@ You don&rsquo;t have write permissions for the /Library/Ruby/>Gems/2.1.0 directo
   </header>
 
 
-  <div class="entry-content"><p> This is <strong>ianwang</strong>&rsquo;s blog. Why site&rsquo;s domian name is <a href="http://www.ikitweb.com">http://www.ikitweb.com</a> ?<br/>
- it means &ldquo;i kit web&rdquo; from words. &ldquo;kitweb&rdquo;,reverse it would be <a href="http://www.webkit.org">webkit</a>,yes,webkit is my work areas.<br/>
-<img src="http://www.webkit.org/images/icon-gold.png" alt="webkit log" /></p>
-
+  <div class="entry-content"><p>This is <strong>ianwang</strong>’s blog. Why site’s domian name is <a href="http://www.ikitweb.com">http://www.ikitweb.com</a> ?<br />
+ it means “i kit web” from words. “kitweb”,reverse it would be <a href="http://www.webkit.org">webkit</a>,yes,webkit is my work areas.<br />
+<img src="http://www.webkit.org/images/icon-gold.png" alt="webkit log" /><br />
 </div>
   
   
