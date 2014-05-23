@@ -3,7 +3,8 @@ layout: post
 title: "Start from I kit web"
 date: 2014-02-15 12:50:49 +0800
 comments: true
-categories: 
+categories: webkit
+tags: ruby webkit
 ---
 
  This is **ianwang**'s blog. Why site's domian name is <http://www.ikitweb.com> ?  

@@ -3,7 +3,8 @@ layout: post
 title: "在Mac OSX 10.9搭建Github/Octopress博客"
 date: 2014-04-11 19:03:24 +0800
 comments: true
-categories: github Octopress mac
+categories: github octopress mac
+tags: octopress mac ruby git homebrew rvm xcode
 ---
   *Octopress*需要**ruby 1.9.3**，而我mac系统安装的ruby是2.1的，此外Octopress还需要bundle安装自己的依赖gem包。一开始我想着直接用mac上ruby2.1，结果在执行`gem install bundle`时，发现之下的错误：
   

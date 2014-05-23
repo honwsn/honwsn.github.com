@@ -17,3 +17,11 @@
 .CodeRay span.insert, .CodeRay span.change, .CodeRay span.delete {
         width: auto;
 }
+
+//remove tags text decoration ianwang 5.23.2014
+.tag-cloud {
+    a {
+	text-decoration: none;
+    }
+    margin-top: 10px
+}
