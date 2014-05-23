@@ -3,7 +3,7 @@ layout: post
 title: "关于线程消息队列的设计"
 date: 2014-04-16 19:35:20 +0800
 comments: true
-categories: [webkit,chrome]
+categories: [webkit]
 tags: [thread,webkit,chrome,ruby]
 ---
 
