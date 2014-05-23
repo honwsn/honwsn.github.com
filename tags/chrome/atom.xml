@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Tag: chrome | I. KIT. WEB]]></title>
+  <link href="http://www.ikitweb.com/tags/chrome/atom.xml" rel="self"/>
+  <link href="http://www.ikitweb.com/"/>
+  <updated>2014-05-23T16:57:53+08:00</updated>
+  <id>http://www.ikitweb.com/</id>
+  <author>
+    <name><![CDATA[ianwang]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[关于线程消息队列的设计]]></title>
+    <link href="http://www.ikitweb.com/blog/2014/04/16/about-thread-message-queue-design/"/>
+    <updated>2014-04-16T19:35:20+08:00</updated>
+    <id>http://www.ikitweb.com/blog/2014/04/16/about-thread-message-queue-design</id>
+    <content type="html"><![CDATA[<h3 id="section">一. 实现一个有消息队列的线程</h3>
+
+<p>大概有以下接口：  </p>
+
+<ul>
+  <li>添加任务到消息队列: addTask</li>
+  <li>从消息队列中获取任务: popTask </li>
+  <li>执行这个任务</li>
+  <li>要实现一个线程的循环体:threadRunloop.</li>
+</ul>
+
+<p>上述操作是在多个线程中执行的，例如addTask可以由任何一个线程执行。
+而popTask，threadRunloop只在当前线程执行。</p>
+
+<p>MessageQueue的实现重要的一点：<strong>要保证对消息队列操作的同步和互斥</strong>.在linux中，就涉及到两个技术点取实现，一个是互斥变量Mute，一个是信号量Condition:
+<!--more-->
+下面是伪代码：
+<div class='bogus-wrapper'><notextile><figure class='code'><div style='overflow-x:auto; overflow-y:hidden;'> <table class="CodeRay"><tr>
+  <td class="line-numbers"><pre><a href="#n1" name="n1">1</a>
+<a href="#n2" name="n2">2</a>
+<a href="#n3" name="n3">3</a>
+<a href="#n4" name="n4">4</a>
+<a href="#n5" name="n5">5</a>
+<a href="#n6" name="n6">6</a>
+<a href="#n7" name="n7">7</a>
+<a href="#n8" name="n8">8</a>
+<a href="#n9" name="n9">9</a>
+<strong><a href="#n10" name="n10">10</a></strong>
+<a href="#n11" name="n11">11</a>
+<a href="#n12" name="n12">12</a>
+<a href="#n13" name="n13">13</a>
+<a href="#n14" name="n14">14</a>
+<a href="#n15" name="n15">15</a>
+<a href="#n16" name="n16">16</a>
+<a href="#n17" name="n17">17</a>
+<a href="#n18" name="n18">18</a>
+<a href="#n19" name="n19">19</a>
+<strong><a href="#n20" name="n20">20</a></strong>
+<a href="#n21" name="n21">21</a>
+<a href="#n22" name="n22">22</a>
+<a href="#n23" name="n23">23</a>
+<a href="#n24" name="n24">24</a>
+<a href="#n25" name="n25">25</a>
+<a href="#n26" name="n26">26</a>
+<a href="#n27" name="n27">27</a>
+<a href="#n28" name="n28">28</a>
+<a href="#n29" name="n29">29</a>
+<strong><a href="#n30" name="n30">30</a></strong>
+<a href="#n31" name="n31">31</a>
+<a href="#n32" name="n32">32</a>
+<a href="#n33" name="n33">33</a>
+<a href="#n34" name="n34">34</a>
+<a href="#n35" name="n35">35</a>
+<a href="#n36" name="n36">36</a>
+<a href="#n37" name="n37">37</a>
+<a href="#n38" name="n38">38</a>
+<a href="#n39" name="n39">39</a>
+<strong><a href="#n40" name="n40">40</a></strong>
+<a href="#n41" name="n41">41</a>
+<a href="#n42" name="n42">42</a>
+<a href="#n43" name="n43">43</a>
+<a href="#n44" name="n44">44</a>
+<a href="#n45" name="n45">45</a>
+<a href="#n46" name="n46">46</a>
+<a href="#n47" name="n47">47</a>
+<a href="#n48" name="n48">48</a>
+<a href="#n49" name="n49">49</a>
+<strong><a href="#n50" name="n50">50</a></strong>
+<a href="#n51" name="n51">51</a>
+<a href="#n52" name="n52">52</a>
+<a href="#n53" name="n53">53</a>
+<a href="#n54" name="n54">54</a>
+<a href="#n55" name="n55">55</a>
+<a href="#n56" name="n56">56</a>
+<a href="#n57" name="n57">57</a>
+<a href="#n58" name="n58">58</a>
+<a href="#n59" name="n59">59</a>
+<strong><a href="#n60" name="n60">60</a></strong>
+<a href="#n61" name="n61">61</a>
+</pre></td>
+  <td class="code"><pre>
+<span class="keyword">class</span> <span class="class">loopThread</span>:<span class="directive">public</span> Thread{
+    <span class="directive">public</span>:
+        <span class="directive">void</span> addTask(Task * task,<span class="predefined-type">bool</span> needSignal);
+        Task * popTask();
+    <span class="directive">private</span>:
+        <span class="directive">void</span> threadRunloop();
+        MessageQueue taskQueue;
+        Mutex operationsMutex;
+        Condition operationsCond;
+    }&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;<span class="directive">void</span> loopThread::addTask(Task * task,<span class="predefined-type">bool</span> needSignal){
+    <span class="keyword">if</span>(!task)
+        <span class="keyword">return</span>;
+        
+    operationsMutex.lock();
+    taskQueue.append(task);
+    operationsMutex.unLock();
+    
+    <span class="keyword">if</span>(needSignal){
+        operationsCond.signal();
+    }
+}
+
+Task * loopThread::popTask(){
+    Task * task = taskQueue.popTaskByPriority();
+    <span class="keyword">return</span> task;
+}
+
+<span class="directive">void</span> loopThread::threadRunloop(){
+    
+    Task * currentTask = null; 
+    <span class="comment">//run tasks </span>
+    <span class="predefined-type">bool</span> stop = <span class="predefined-constant">false</span>;
+    <span class="keyword">while</span>(!stop){
+    
+        operationsMutex.lock()
+        
+        <span class="comment">//1.check taskQueue have pending task or not</span>
+        <span class="keyword">while</span>(!taskQueue.size()){
+            <span class="comment">/*这里使用while而不是if，是因为有可能存在多个
+            loopThread线程都在等待，但唤醒后，
+            只能有一个线程进行下面的执行，导致条件发生改变，
+            所以其他线程在接着执行时，任务需要条件判断一次。
+            这就是所谓的“惊群效应”*/</span>
+            operationsCond.wait(operationsMutex)
+        }
+        
+        <span class="comment">//2.get a task from queue</span>
+        
+        currentTask = popTask();
+        
+        operationsMutex.unLock();
+    
+        <span class="comment">//3.excute this task;</span>
+        <span class="keyword">if</span>(currentTask){
+            currentTask-&amp;gt;run();
+        }
+    }
+}</pre></td>
+</tr></table>
+ </div> </figure></notextile></div>
+</code></pre>
+
+<h3 id="mutexcondition">二. 互斥变量Mutex和条件变量Condition的使用场景</h3>
+<p>mutex和condition对象主要是pthread接口的封装，最终调用的POSIX api 如下：
+	<div class='bogus-wrapper'><notextile><figure class='code'><div style='overflow-x:auto; overflow-y:hidden;'> <div class="CodeRay">
+  <div class="code"><pre>
+    <span class="comment">//1.Mutex &lt;br /&gt;</span>
+    pthread_mutex_init&lt;br /&gt;
+    pthread_mutex_lock&lt;br /&gt;
+    pthread_mutex_trylock&lt;br /&gt;
+    pthread_mutex_unlock
+    ThreadCondition 
+    <span class="comment">//2.条件等待:&lt;br /&gt;</span>
+    pthread_cond_init&lt;br /&gt;
+    pthread_cond_wait(&amp;amp;conidtion,&amp;amp;mutex);&lt;br /&gt;
+    phtread_cond_timewait    &lt;br /&gt;
+    phtread_cond_signal    
+    </pre></div>
+</div>
+ </div> </figure></notextile></div></p>
+
+<h4 id="pthreadcondwait">1. pthread_cond_wait()的使用过程说明</h4>
+<pre><code><div class='bogus-wrapper'><notextile><figure class='code'><div style='overflow-x:auto; overflow-y:hidden;'> <div class="CodeRay">
+  <div class="code"><pre>  
+pthread_mutex_lock(&amp;amp;mutex);
+<span class="comment">//对临界资源的操作 </span>
+pthread_cond_wait(&amp;amp;cond, &amp;amp;mutex);
+<span class="comment">//对临界资源的操作 </span>
+pthread_mutex_unlock(&amp;amp;mutex);
+</pre></div>
+</div>
+ </div> </figure></notextile></div> 上面的代码**锁**的变化流程如下 :
+</code></pre>
+
+<p>mutex.lock()-&gt;<strong>mutext.unlock()–&gt;mutex.lock()</strong>–&gt;mutext.unlock()</p>
+
+<p>中间两步是在<code>pthread_cond_wait</code>中完成的。pthread_cond_wait把当前线程<strong>放入阻塞队列后</strong>，会进行一个<strong>mutex unlock</strong>释放锁，此后其他线程就可以访问临界资源了,例如这个临界资源可能是一个任务队列(也可是是其他条件变量)，其他线程就可以往任务队列里面添加新的任务。此时当前thread处于wait状态等待条件cond发生改变。当其他线程添加任务到队列后就会进行唤醒操作，<code>phtread_cond_signal(&amp;cond)</code>就唤醒了当前线程，当前线程在<strong>pthread_cond_wait返回前</strong>，里面会进行一个mutex lock操作以重新获取锁。</p>
+
+<h4 id="pthreadcondwait-1">2. pthread_cond_wait()存在的“惊群效应”</h4>
+<p>当有多个线程处于pthread_cond_wait等同一个cond时，当cond条件满足时，这个多个线程都可能被唤醒，但只有其中一个线程得到了锁（得到下面临界资源的执行权限)，其他线程等待。当该线程执行完毕后，临界资源的执行条件可能发生了改变（例如上述任务队列为空了），此时其他线程要往下执行的话需要再次判断条件，这里就使用了<code>while</code>循环。
+	<div class='bogus-wrapper'><notextile><figure class='code'><div style='overflow-x:auto; overflow-y:hidden;'> <div class="CodeRay">
+  <div class="code"><pre>
+    pthread_mutex_lock(&amp;amp;mutex);
+    <span class="keyword">while</span>(<span class="error">临</span><span class="error">界</span><span class="error">资</span><span class="error">源</span><span class="error">条</span><span class="error">件</span><span class="error">不</span><span class="error">满</span><span class="error">足</span>){
+    pthread_cond_wait(&amp;amp;cond,&amp;amp;mutex);
+    }
+    <span class="error">…</span>.
+    ..<span class="error">对</span><span class="error">临</span><span class="error">界</span><span class="error">资</span><span class="error">源</span><span class="error">的</span><span class="error">操</span><span class="error">作</span>
+    <span class="error">…</span>.
+    phtread_mutext_unlock(&amp;amp;mutex);    
+    </pre></div>
+</div>
+ </div> </figure></notextile></div>
+可以参考<a href="http://hi.baidu.com/yangyangye2008/item/454628450f8f7890833ae1a8">这里</a></p>
+
+<h3 id="section-1">三. 存在消息队列线程的使用案例</h3>
+
+<h4 id="threadproxy">1. thread线程类对外提供proxy接口</h4>
+
+<p>在thread线程类接口供外部使用时，建立一个ThreadProxy是一个良好的方式。</p>
+
+<p><a href="http://opensource.apple.com/source/WebCore/WebCore-1640.1/platform/graphics/chromium/cc/CCScopedThreadProxy.h">CCScopedThreadProxy</a>的设计：线程API通过创建一个proxy给外部线程使用，但线程自己可以关闭这个使用。下面可以停止某个外部对象(就是个threadproxy)使用当前的thread。
+<code>CCScopedThreadProxy::shutdown()</code></p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption class='code-header' style='margin-bottom:-5px;'><span>CCScopedThreadProxy.h</span><a href='http://opensource.apple.com/source/WebCore/WebCore-1640.1/platform/graphics/chromium/cc/CCScopedThreadProxy.h'>linek </a></figcaption><div style='overflow-x:auto; overflow-y:hidden;'> <table class="CodeRay"><tr>
+  <td class="line-numbers"><pre><a href="#n1" name="n1">1</a>
+<a href="#n2" name="n2">2</a>
+<a href="#n3" name="n3">3</a>
+<a href="#n4" name="n4">4</a>
+<a href="#n5" name="n5">5</a>
+<a href="#n6" name="n6">6</a>
+<a href="#n7" name="n7">7</a>
+<a href="#n8" name="n8">8</a>
+<a href="#n9" name="n9">9</a>
+<strong><a href="#n10" name="n10">10</a></strong>
+<a href="#n11" name="n11">11</a>
+<a href="#n12" name="n12">12</a>
+<a href="#n13" name="n13">13</a>
+<a href="#n14" name="n14">14</a>
+<a href="#n15" name="n15">15</a>
+<a href="#n16" name="n16">16</a>
+<a href="#n17" name="n17">17</a>
+<a href="#n18" name="n18">18</a>
+<a href="#n19" name="n19">19</a>
+<strong><a href="#n20" name="n20">20</a></strong>
+<a href="#n21" name="n21">21</a>
+<a href="#n22" name="n22">22</a>
+<a href="#n23" name="n23">23</a>
+<a href="#n24" name="n24">24</a>
+<a href="#n25" name="n25">25</a>
+<a href="#n26" name="n26">26</a>
+<a href="#n27" name="n27">27</a>
+<a href="#n28" name="n28">28</a>
+<a href="#n29" name="n29">29</a>
+<strong><a href="#n30" name="n30">30</a></strong>
+<a href="#n31" name="n31">31</a>
+<a href="#n32" name="n32">32</a>
+<a href="#n33" name="n33">33</a>
+<a href="#n34" name="n34">34</a>
+<a href="#n35" name="n35">35</a>
+<a href="#n36" name="n36">36</a>
+<a href="#n37" name="n37">37</a>
+<a href="#n38" name="n38">38</a>
+<a href="#n39" name="n39">39</a>
+<strong><a href="#n40" name="n40">40</a></strong>
+<a href="#n41" name="n41">41</a>
+<a href="#n42" name="n42">42</a>
+<a href="#n43" name="n43">43</a>
+<a href="#n44" name="n44">44</a>
+<a href="#n45" name="n45">45</a>
+<a href="#n46" name="n46">46</a>
+<a href="#n47" name="n47">47</a>
+<a href="#n48" name="n48">48</a>
+<a href="#n49" name="n49">49</a>
+<strong><a href="#n50" name="n50">50</a></strong>
+<a href="#n51" name="n51">51</a>
+<a href="#n52" name="n52">52</a>
+<a href="#n53" name="n53">53</a>
+<a href="#n54" name="n54">54</a>
+<a href="#n55" name="n55">55</a>
+<a href="#n56" name="n56">56</a>
+<a href="#n57" name="n57">57</a>
+<a href="#n58" name="n58">58</a>
+<a href="#n59" name="n59">59</a>
+<strong><a href="#n60" name="n60">60</a></strong>
+<a href="#n61" name="n61">61</a>
+<a href="#n62" name="n62">62</a>
+<a href="#n63" name="n63">63</a>
+<a href="#n64" name="n64">64</a>
+<a href="#n65" name="n65">65</a>
+</pre></td>
+  <td class="code"><pre> 
+<span class="preprocessor">#ifndef</span> CCScopedThreadProxy_h
+<span class="preprocessor">#define</span> CCScopedThreadProxy_h&lt;/p&gt;
+
+&lt;h1 id=<span class="string"><span class="delimiter">&quot;</span><span class="content">include-ccccproxyh</span><span class="delimiter">&quot;</span></span>&gt;include <span class="error">“</span>cc/CCProxy.h<span class="error">”</span>&lt;/h1&gt;
+&lt;p&gt;<span class="preprocessor">#include</span> <span class="error">“</span>cc/CCThreadTask.h<span class="error">”</span>
+<span class="preprocessor">#include</span> &amp;lt;wtf/ThreadSafeRefCounted.h&amp;gt;&lt;/p&gt;
+
+&lt;p&gt;<span class="keyword">namespace</span> WebCore {&lt;/p&gt;
+
+&lt;p&gt;<span class="comment">// This class is a proxy used to post tasks to an target thread from any other thread. The proxy may be shut down at</span>
+<span class="comment">// any point from the target thread after which no more tasks posted to the proxy will run. In other words, all</span>
+<span class="comment">// tasks posted via a proxy are scoped to the lifecycle of the proxy. Use this when posting tasks to an object that</span>
+<span class="comment">// might die with tasks in flight.</span>
+<span class="comment">//</span>
+<span class="comment">// The proxy must be created and shut down from the target thread, tasks may be posted from any thread.</span>
+<span class="comment">//</span>
+<span class="comment">// Implementation note: Unlike ScopedRunnableMethodFactory in Chromium, pending tasks are not cancelled by actually</span>
+<span class="comment">// destroying the proxy. Instead each pending task holds a reference to the proxy to avoid maintaining an explicit</span>
+<span class="comment">// list of outstanding tasks.</span>
+<span class="keyword">class</span> <span class="class">CCScopedThreadProxy</span> : <span class="directive">public</span> ThreadSafeRefCounted&lt;ccscopedthreadproxy&gt; {
+<span class="directive">public</span>:
+    <span class="directive">static</span> PassRefPtr&lt;ccscopedthreadproxy&gt; create(CCThread* targetThread)
+    {
+        ASSERT(currentThread() == targetThread-&amp;gt;threadID());
+        <span class="keyword">return</span> adoptRef(<span class="keyword">new</span> CCScopedThreadProxy(targetThread));
+    }&lt;/ccscopedthreadproxy&gt;&lt;/ccscopedthreadproxy&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;<span class="comment">// Can be called from any thread. Posts a task to the target thread that runs unless</span>
+<span class="comment">// shutdown() is called before it runs.</span>
+<span class="directive">void</span> postTask(PassOwnPtr&amp;lt;CCThread::Task&amp;gt; task)
+{
+    ref();
+    m_targetThread-&amp;gt;postTask(createCCThreadTask(<span class="local-variable">this</span>, &amp;amp;CCScopedThreadProxy::runTaskIfNotShutdown, task));
+}
+
+<span class="directive">void</span> shutdown()
+{
+    ASSERT(currentThread() == m_targetThread-&amp;gt;threadID());
+    ASSERT(!m_shutdown);
+    m_shutdown = <span class="predefined-constant">true</span>;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;<span class="directive">private</span>:
+    <span class="directive">explicit</span> CCScopedThreadProxy(CCThread* targetThread)
+        : m_targetThread(targetThread)
+        , m_shutdown(<span class="predefined-constant">false</span>) { }&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;<span class="directive">void</span> runTaskIfNotShutdown(PassOwnPtr&amp;lt;CCThread::Task&amp;gt; popTask)
+{
+    OwnPtr&amp;lt;CCThread::Task&amp;gt; task = popTask;
+    <span class="comment">// If our shutdown flag is set, it's possible that m_targetThread has already been destroyed so don't</span>
+    <span class="comment">// touch it.</span>
+    <span class="keyword">if</span> (m_shutdown) {
+        deref();
+        <span class="keyword">return</span>;
+    }
+    ASSERT(currentThread() == m_targetThread-&amp;gt;threadID());
+    task-&amp;gt;performTask();
+    deref();
+}
+
+CCThread* m_targetThread;
+<span class="predefined-type">bool</span> m_shutdown; <span class="comment">// Only accessed on the target thread }; } #endif </span></pre></td>
+</tr></table>
+ </div> </figure></notextile></div>
+</code></pre>
+
+<h4 id="section-2">2. 简单的线程队列案例:</h4>
+
+<ul>
+  <li>chromium <a href="http://www.opensource.apple.com/source/WebCore/WebCore-1298.39/platform/graphics/chromium/cc/CCThread.cpp">CCThread</a></li>
+  <li>android42 <a href="https://android.googlesource.com/platform/external/webkit/+/42326004062d6b846c3050ad03a1e80fa9db425c/Source/WebCore/platform/graphics/android/rendering/TexturesGenerator.cpp">webkit TexturesGenerator.cpp的实现</a></li>
+</ul>
+
+<h4 id="section-3">3. 参考</h4>
+<ul>
+  <li>chromium <a href="https://gitorious.org/webkit-clutter/webkit-clutter/source/804b17d000553df4f01db334f97c9bd01e416716:Source/WebCore/platform/graphics/chromium/cc/CCThreadProxy.cpp#L82-348">CCThreadProxy</a></li>
+  <li>chromium <a href="http://opensource.apple.com/source/WebCore/WebCore-1640.1/platform/graphics/chromium/cc/CCScopedThreadProxy.h">CCScopedThreadProxy</a></li>
+</ul>
+]]></content>
+  </entry>
+  
+</feed>

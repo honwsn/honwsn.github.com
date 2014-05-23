@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[I. KIT. WEB]]></title>
-  <link href="http://www.ikitweb.com/atom.xml" rel="self"/>
+  <title><![CDATA[Tag: ruby | I. KIT. WEB]]></title>
+  <link href="http://www.ikitweb.com/tags/ruby/atom.xml" rel="self"/>
   <link href="http://www.ikitweb.com/"/>
   <updated>2014-05-23T16:57:53+08:00</updated>
   <id>http://www.ikitweb.com/</id>
@@ -34,9 +34,8 @@
 
 <p>MessageQueue的实现重要的一点：<strong>要保证对消息队列操作的同步和互斥</strong>.在linux中，就涉及到两个技术点取实现，一个是互斥变量Mute，一个是信号量Condition:
 <!--more-->
-下面是伪代码：</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><div style="overflow-x:auto; overflow-y:hidden;"> <table class="CodeRay"><tr>
+下面是伪代码：
+<div class='bogus-wrapper'><notextile><figure class='code'><div style='overflow-x:auto; overflow-y:hidden;'> <table class="CodeRay"><tr>
   <td class="line-numbers"><pre><a href="#n1" name="n1">1</a>
 <a href="#n2" name="n2">2</a>
 <a href="#n3" name="n3">3</a>
@@ -109,117 +108,113 @@
         MessageQueue taskQueue;
         Mutex operationsMutex;
         Condition operationsCond;
-    }
+    }&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;<span class="directive">void</span> loopThread::addTask(Task * task,<span class="predefined-type">bool</span> needSignal){
+    <span class="keyword">if</span>(!task)
+        <span class="keyword">return</span>;
+        
+    operationsMutex.lock();
+    taskQueue.append(task);
+    operationsMutex.unLock();
     
-    <span class="directive">void</span> loopThread::addTask(Task * task,<span class="predefined-type">bool</span> needSignal){
-        <span class="keyword">if</span>(!task)
-            <span class="keyword">return</span>;
-            
-        operationsMutex.lock();
-        taskQueue.append(task);
+    <span class="keyword">if</span>(needSignal){
+        operationsCond.signal();
+    }
+}
+
+Task * loopThread::popTask(){
+    Task * task = taskQueue.popTaskByPriority();
+    <span class="keyword">return</span> task;
+}
+
+<span class="directive">void</span> loopThread::threadRunloop(){
+    
+    Task * currentTask = null; 
+    <span class="comment">//run tasks </span>
+    <span class="predefined-type">bool</span> stop = <span class="predefined-constant">false</span>;
+    <span class="keyword">while</span>(!stop){
+    
+        operationsMutex.lock()
+        
+        <span class="comment">//1.check taskQueue have pending task or not</span>
+        <span class="keyword">while</span>(!taskQueue.size()){
+            <span class="comment">/*这里使用while而不是if，是因为有可能存在多个
+            loopThread线程都在等待，但唤醒后，
+            只能有一个线程进行下面的执行，导致条件发生改变，
+            所以其他线程在接着执行时，任务需要条件判断一次。
+            这就是所谓的“惊群效应”*/</span>
+            operationsCond.wait(operationsMutex)
+        }
+        
+        <span class="comment">//2.get a task from queue</span>
+        
+        currentTask = popTask();
+        
         operationsMutex.unLock();
-        
-        <span class="keyword">if</span>(needSignal){
-            operationsCond.signal();
+    
+        <span class="comment">//3.excute this task;</span>
+        <span class="keyword">if</span>(currentTask){
+            currentTask-&amp;gt;run();
         }
     }
-    
-    Task * loopThread::popTask(){
-        Task * task = taskQueue.popTaskByPriority();
-        <span class="keyword">return</span> task;
-    }
-    
-    <span class="directive">void</span> loopThread::threadRunloop(){
-        
-        Task * currentTask = null; 
-        <span class="comment">//run tasks </span>
-        <span class="predefined-type">bool</span> stop = <span class="predefined-constant">false</span>;
-        <span class="keyword">while</span>(!stop){
-        
-            operationsMutex.lock()
-            
-            <span class="comment">//1.check taskQueue have pending task or not</span>
-            <span class="keyword">while</span>(!taskQueue.size()){
-                <span class="comment">/*这里使用while而不是if，是因为有可能存在多个
-                loopThread线程都在等待，但唤醒后，
-                只能有一个线程进行下面的执行，导致条件发生改变，
-                所以其他线程在接着执行时，任务需要条件判断一次。
-                这就是所谓的“惊群效应”*/</span>
-                operationsCond.wait(operationsMutex)
-            }
-            
-            <span class="comment">//2.get a task from queue</span>
-            
-            currentTask = popTask();
-            
-            operationsMutex.unLock();
-        
-            <span class="comment">//3.excute this task;</span>
-            <span class="keyword">if</span>(currentTask){
-                currentTask-&gt;run();
-            }
-        }
-    }</pre></td>
+}</pre></td>
 </tr></table>
  </div> </figure></notextile></div>
+</code></pre>
 
 <h3 id="mutexcondition">二. 互斥变量Mutex和条件变量Condition的使用场景</h3>
-<p>mutex和condition对象主要是pthread接口的封装，最终调用的POSIX api 如下：</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><div style="overflow-x:auto; overflow-y:hidden;"> <div class="CodeRay">
+<p>mutex和condition对象主要是pthread接口的封装，最终调用的POSIX api 如下：
+	<div class='bogus-wrapper'><notextile><figure class='code'><div style='overflow-x:auto; overflow-y:hidden;'> <div class="CodeRay">
   <div class="code"><pre>
-    <span class="comment">//1.Mutex   </span>
-    pthread_mutex_init  
-    pthread_mutex_lock  
-    pthread_mutex_trylock  
+    <span class="comment">//1.Mutex &lt;br /&gt;</span>
+    pthread_mutex_init&lt;br /&gt;
+    pthread_mutex_lock&lt;br /&gt;
+    pthread_mutex_trylock&lt;br /&gt;
     pthread_mutex_unlock
     ThreadCondition 
-    <span class="comment">//2.条件等待:  </span>
-    pthread_cond_init  
-    pthread_cond_wait(&amp;conidtion,&amp;mutex);  
-    phtread_cond_timewait      
+    <span class="comment">//2.条件等待:&lt;br /&gt;</span>
+    pthread_cond_init&lt;br /&gt;
+    pthread_cond_wait(&amp;amp;conidtion,&amp;amp;mutex);&lt;br /&gt;
+    phtread_cond_timewait    &lt;br /&gt;
     phtread_cond_signal    
     </pre></div>
 </div>
- </div> </figure></notextile></div>
+ </div> </figure></notextile></div></p>
 
 <h4 id="pthreadcondwait">1. pthread_cond_wait()的使用过程说明</h4>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><div style="overflow-x:auto; overflow-y:hidden;"> <div class="CodeRay">
+<pre><code><div class='bogus-wrapper'><notextile><figure class='code'><div style='overflow-x:auto; overflow-y:hidden;'> <div class="CodeRay">
   <div class="code"><pre>  
-    pthread_mutex_lock(&amp;mutex);
-    <span class="comment">//对临界资源的操作 </span>
-    pthread_cond_wait(&amp;cond, &amp;mutex);
-    <span class="comment">//对临界资源的操作 </span>
-    pthread_mutex_unlock(&amp;mutex);
-    </pre></div>
+pthread_mutex_lock(&amp;amp;mutex);
+<span class="comment">//对临界资源的操作 </span>
+pthread_cond_wait(&amp;amp;cond, &amp;amp;mutex);
+<span class="comment">//对临界资源的操作 </span>
+pthread_mutex_unlock(&amp;amp;mutex);
+</pre></div>
 </div>
- </div> </figure></notextile></div>
-
-<p>上面的代码<strong>锁</strong>的变化流程如下 :</p>
+ </div> </figure></notextile></div> 上面的代码**锁**的变化流程如下 :
+</code></pre>
 
 <p>mutex.lock()-&gt;<strong>mutext.unlock()–&gt;mutex.lock()</strong>–&gt;mutext.unlock()</p>
 
 <p>中间两步是在<code>pthread_cond_wait</code>中完成的。pthread_cond_wait把当前线程<strong>放入阻塞队列后</strong>，会进行一个<strong>mutex unlock</strong>释放锁，此后其他线程就可以访问临界资源了,例如这个临界资源可能是一个任务队列(也可是是其他条件变量)，其他线程就可以往任务队列里面添加新的任务。此时当前thread处于wait状态等待条件cond发生改变。当其他线程添加任务到队列后就会进行唤醒操作，<code>phtread_cond_signal(&amp;cond)</code>就唤醒了当前线程，当前线程在<strong>pthread_cond_wait返回前</strong>，里面会进行一个mutex lock操作以重新获取锁。</p>
 
 <h4 id="pthreadcondwait-1">2. pthread_cond_wait()存在的“惊群效应”</h4>
-<p>当有多个线程处于pthread_cond_wait等同一个cond时，当cond条件满足时，这个多个线程都可能被唤醒，但只有其中一个线程得到了锁（得到下面临界资源的执行权限)，其他线程等待。当该线程执行完毕后，临界资源的执行条件可能发生了改变（例如上述任务队列为空了），此时其他线程要往下执行的话需要再次判断条件，这里就使用了<code>while</code>循环。</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><div style="overflow-x:auto; overflow-y:hidden;"> <div class="CodeRay">
+<p>当有多个线程处于pthread_cond_wait等同一个cond时，当cond条件满足时，这个多个线程都可能被唤醒，但只有其中一个线程得到了锁（得到下面临界资源的执行权限)，其他线程等待。当该线程执行完毕后，临界资源的执行条件可能发生了改变（例如上述任务队列为空了），此时其他线程要往下执行的话需要再次判断条件，这里就使用了<code>while</code>循环。
+	<div class='bogus-wrapper'><notextile><figure class='code'><div style='overflow-x:auto; overflow-y:hidden;'> <div class="CodeRay">
   <div class="code"><pre>
-    pthread_mutex_lock(&amp;mutex);
+    pthread_mutex_lock(&amp;amp;mutex);
     <span class="keyword">while</span>(<span class="error">临</span><span class="error">界</span><span class="error">资</span><span class="error">源</span><span class="error">条</span><span class="error">件</span><span class="error">不</span><span class="error">满</span><span class="error">足</span>){
-    pthread_cond_wait(&amp;cond,&amp;mutex);
+    pthread_cond_wait(&amp;amp;cond,&amp;amp;mutex);
     }
-    ....
+    <span class="error">…</span>.
     ..<span class="error">对</span><span class="error">临</span><span class="error">界</span><span class="error">资</span><span class="error">源</span><span class="error">的</span><span class="error">操</span><span class="error">作</span>
-    ....
-    phtread_mutext_unlock(&amp;mutex);    
+    <span class="error">…</span>.
+    phtread_mutext_unlock(&amp;amp;mutex);    
     </pre></div>
 </div>
  </div> </figure></notextile></div>
-
-<p>可以参考<a href="http://hi.baidu.com/yangyangye2008/item/454628450f8f7890833ae1a8">这里</a></p>
+可以参考<a href="http://hi.baidu.com/yangyangye2008/item/454628450f8f7890833ae1a8">这里</a></p>
 
 <h3 id="section-1">三. 存在消息队列线程的使用案例</h3>
 
@@ -230,7 +225,7 @@
 <p><a href="http://opensource.apple.com/source/WebCore/WebCore-1640.1/platform/graphics/chromium/cc/CCScopedThreadProxy.h">CCScopedThreadProxy</a>的设计：线程API通过创建一个proxy给外部线程使用，但线程自己可以关闭这个使用。下面可以停止某个外部对象(就是个threadproxy)使用当前的thread。
 <code>CCScopedThreadProxy::shutdown()</code></p>
 
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption class="code-header" style="margin-bottom:-5px;"><span>CCScopedThreadProxy.h</span><a href="http://opensource.apple.com/source/WebCore/WebCore-1640.1/platform/graphics/chromium/cc/CCScopedThreadProxy.h">linek </a></figcaption><div style="overflow-x:auto; overflow-y:hidden;"> <table class="CodeRay"><tr>
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption class='code-header' style='margin-bottom:-5px;'><span>CCScopedThreadProxy.h</span><a href='http://opensource.apple.com/source/WebCore/WebCore-1640.1/platform/graphics/chromium/cc/CCScopedThreadProxy.h'>linek </a></figcaption><div style='overflow-x:auto; overflow-y:hidden;'> <table class="CodeRay"><tr>
   <td class="line-numbers"><pre><a href="#n1" name="n1">1</a>
 <a href="#n2" name="n2">2</a>
 <a href="#n3" name="n3">3</a>
@@ -296,20 +291,18 @@
 <a href="#n63" name="n63">63</a>
 <a href="#n64" name="n64">64</a>
 <a href="#n65" name="n65">65</a>
-<a href="#n66" name="n66">66</a>
-<a href="#n67" name="n67">67</a>
 </pre></td>
   <td class="code"><pre> 
 <span class="preprocessor">#ifndef</span> CCScopedThreadProxy_h
-<span class="preprocessor">#define</span> CCScopedThreadProxy_h
+<span class="preprocessor">#define</span> CCScopedThreadProxy_h&lt;/p&gt;
 
-<span class="preprocessor">#include</span> <span class="include">&quot;cc/CCProxy.h&quot;</span>
-<span class="preprocessor">#include</span> <span class="include">&quot;cc/CCThreadTask.h&quot;</span>
-<span class="preprocessor">#include</span> <span class="include">&lt;wtf/ThreadSafeRefCounted.h&gt;</span>
+&lt;h1 id=<span class="string"><span class="delimiter">&quot;</span><span class="content">include-ccccproxyh</span><span class="delimiter">&quot;</span></span>&gt;include <span class="error">“</span>cc/CCProxy.h<span class="error">”</span>&lt;/h1&gt;
+&lt;p&gt;<span class="preprocessor">#include</span> <span class="error">“</span>cc/CCThreadTask.h<span class="error">”</span>
+<span class="preprocessor">#include</span> &amp;lt;wtf/ThreadSafeRefCounted.h&amp;gt;&lt;/p&gt;
 
-<span class="keyword">namespace</span> WebCore {
+&lt;p&gt;<span class="keyword">namespace</span> WebCore {&lt;/p&gt;
 
-<span class="comment">// This class is a proxy used to post tasks to an target thread from any other thread. The proxy may be shut down at</span>
+&lt;p&gt;<span class="comment">// This class is a proxy used to post tasks to an target thread from any other thread. The proxy may be shut down at</span>
 <span class="comment">// any point from the target thread after which no more tasks posted to the proxy will run. In other words, all</span>
 <span class="comment">// tasks posted via a proxy are scoped to the lifecycle of the proxy. Use this when posting tasks to an object that</span>
 <span class="comment">// might die with tasks in flight.</span>
@@ -319,56 +312,54 @@
 <span class="comment">// Implementation note: Unlike ScopedRunnableMethodFactory in Chromium, pending tasks are not cancelled by actually</span>
 <span class="comment">// destroying the proxy. Instead each pending task holds a reference to the proxy to avoid maintaining an explicit</span>
 <span class="comment">// list of outstanding tasks.</span>
-<span class="keyword">class</span> <span class="class">CCScopedThreadProxy</span> : <span class="directive">public</span> ThreadSafeRefCounted&lt;CCScopedThreadProxy&gt; {
+<span class="keyword">class</span> <span class="class">CCScopedThreadProxy</span> : <span class="directive">public</span> ThreadSafeRefCounted&lt;ccscopedthreadproxy&gt; {
 <span class="directive">public</span>:
-    <span class="directive">static</span> PassRefPtr&lt;CCScopedThreadProxy&gt; create(CCThread* targetThread)
+    <span class="directive">static</span> PassRefPtr&lt;ccscopedthreadproxy&gt; create(CCThread* targetThread)
     {
-        ASSERT(currentThread() == targetThread-&gt;threadID());
+        ASSERT(currentThread() == targetThread-&amp;gt;threadID());
         <span class="keyword">return</span> adoptRef(<span class="keyword">new</span> CCScopedThreadProxy(targetThread));
-    }
-    
-    <span class="comment">// Can be called from any thread. Posts a task to the target thread that runs unless</span>
-    <span class="comment">// shutdown() is called before it runs.</span>
-    <span class="directive">void</span> postTask(PassOwnPtr&lt;CCThread::Task&gt; task)
-    {
-        ref();
-        m_targetThread-&gt;postTask(createCCThreadTask(<span class="local-variable">this</span>, &amp;CCScopedThreadProxy::runTaskIfNotShutdown, task));
-    }
-    
-    <span class="directive">void</span> shutdown()
-    {
-        ASSERT(currentThread() == m_targetThread-&gt;threadID());
-        ASSERT(!m_shutdown);
-        m_shutdown = <span class="predefined-constant">true</span>;
-    }
+    }&lt;/ccscopedthreadproxy&gt;&lt;/ccscopedthreadproxy&gt;&lt;/p&gt;
 
-<span class="directive">private</span>:
+&lt;pre&gt;&lt;code&gt;<span class="comment">// Can be called from any thread. Posts a task to the target thread that runs unless</span>
+<span class="comment">// shutdown() is called before it runs.</span>
+<span class="directive">void</span> postTask(PassOwnPtr&amp;lt;CCThread::Task&amp;gt; task)
+{
+    ref();
+    m_targetThread-&amp;gt;postTask(createCCThreadTask(<span class="local-variable">this</span>, &amp;amp;CCScopedThreadProxy::runTaskIfNotShutdown, task));
+}
+
+<span class="directive">void</span> shutdown()
+{
+    ASSERT(currentThread() == m_targetThread-&amp;gt;threadID());
+    ASSERT(!m_shutdown);
+    m_shutdown = <span class="predefined-constant">true</span>;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;<span class="directive">private</span>:
     <span class="directive">explicit</span> CCScopedThreadProxy(CCThread* targetThread)
         : m_targetThread(targetThread)
-        , m_shutdown(<span class="predefined-constant">false</span>) { }
+        , m_shutdown(<span class="predefined-constant">false</span>) { }&lt;/p&gt;
 
-    <span class="directive">void</span> runTaskIfNotShutdown(PassOwnPtr&lt;CCThread::Task&gt; popTask)
-    {
-        OwnPtr&lt;CCThread::Task&gt; task = popTask;
-        <span class="comment">// If our shutdown flag is set, it's possible that m_targetThread has already been destroyed so don't</span>
-        <span class="comment">// touch it.</span>
-        <span class="keyword">if</span> (m_shutdown) {
-            deref();
-            <span class="keyword">return</span>;
-        }
-        ASSERT(currentThread() == m_targetThread-&gt;threadID());
-        task-&gt;performTask();
+&lt;pre&gt;&lt;code&gt;<span class="directive">void</span> runTaskIfNotShutdown(PassOwnPtr&amp;lt;CCThread::Task&amp;gt; popTask)
+{
+    OwnPtr&amp;lt;CCThread::Task&amp;gt; task = popTask;
+    <span class="comment">// If our shutdown flag is set, it's possible that m_targetThread has already been destroyed so don't</span>
+    <span class="comment">// touch it.</span>
+    <span class="keyword">if</span> (m_shutdown) {
         deref();
+        <span class="keyword">return</span>;
     }
-
-    CCThread* m_targetThread;
-    <span class="predefined-type">bool</span> m_shutdown; <span class="comment">// Only accessed on the target thread</span>
-};
+    ASSERT(currentThread() == m_targetThread-&amp;gt;threadID());
+    task-&amp;gt;performTask();
+    deref();
 }
-<span class="preprocessor">#endif</span>
-</pre></td>
+
+CCThread* m_targetThread;
+<span class="predefined-type">bool</span> m_shutdown; <span class="comment">// Only accessed on the target thread }; } #endif </span></pre></td>
 </tr></table>
  </div> </figure></notextile></div>
+</code></pre>
 
 <h4 id="section-2">2. 简单的线程队列案例:</h4>
 
@@ -466,7 +457,7 @@ rake preview		 //进入预览
 <h3 id="github">六. github建立版本仓库</h3>
 <p>在<a href="www.github.com">github</a>注册登录之后，建立版本仓库，Reposity name必须是username.github.com，这样的格式(username可以是任何名称),这里是<a href="http://blog.csdn.net/jackystudio/article/details/16334861">参考</a></p>
 
-<p><img class="center" src="http://www.ikitweb.com/images/2014-4/addrepos.png" /></p>
+<p><img class="center" src="/images/2014-4/addrepos.png"></p>
 
 <h3 id="gitgithub">七. git与github打通</h3>
 
@@ -482,16 +473,16 @@ rake preview		 //进入预览
   </li>
 </ol>
 
-<p><img class="center" src="http://www.ikitweb.com/images/2014-4/sshkeygen.png" width="700" height="300" /></p>
+<p><img class="center" src="/images/2014-4/sshkeygen.png" width="700" height="300"></p>
 
 <p>结果在～/.ssh下,id_rsa.pub就是公钥
-<img class="center" src="http://www.ikitweb.com/images/2014-4/idrsa_pub.png" /></p>
+<img class="center" src="/images/2014-4/idrsa_pub.png"></p>
 
 <ol>
   <li>
     <p>把公钥给github。
 登录github－&gt;右上角accout settings-&gt;SSH keys-&gt;add SSH key.把id_rsa.pub得内容复制粘贴，Title随意。
-<img class="center" src="http://www.ikitweb.com/images/2014-4/addshhkey.png" /></p>
+<img class="center" src="/images/2014-4/addshhkey.png"></p>
   </li>
   <li>
     <p>客户端验证与github是否打通</p>
@@ -503,7 +494,7 @@ rake preview		 //进入预览
 </blockquote>
 
 <p>我得得到如下结果:
-<img class="center" src="http://www.ikitweb.com/images/2014-4/ssht.png" /></p>
+<img class="center" src="/images/2014-4/ssht.png"></p>
 
 <h3 id="octopressgithub">八. 把Octopress博客发布到github</h3>
 
@@ -538,7 +529,7 @@ rake preview		 //进入预览
   </li>
 </ol>
 
-<p><img class="center" src="http://www.ikitweb.com/images/2014-4/setup_github_pages.png" /></p>
+<p><img class="center" src="/images/2014-4/setup_github_pages.png"></p>
 
 <p><strong>发布博客：</strong></p>
 
@@ -577,9 +568,9 @@ git push origin source
 所以才采用git remote add 以及git pull origin source等等。这里由<a href="http://stackoverflow.com/questions/4855561/difference-between-git-remote-add-and-git-clone">stackOverflow的解释</a>。　</p>
 
 <p>下面是我操作过程的截图:
-<img class="center" src="http://www.ikitweb.com/images/2014-4/cloneblog1.png" />
+<img class="center" src="/images/2014-4/cloneblog1.png">
 还有一点:
-<img class="center" src="http://www.ikitweb.com/images/2014-4/cloneblog2.png" /></p>
+<img class="center" src="/images/2014-4/cloneblog2.png"></p>
 
 <h3 id="octopress-1">十. Octopress目录分析</h3>
 <p>这个放到下一篇了。。。。先到这里</p>
@@ -600,7 +591,7 @@ Host Your Static Website on Amazon S3</a></li>
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[Start From I Kit Web]]></title>
+    <title type="html"><![CDATA[Start from I kit web]]></title>
     <link href="http://www.ikitweb.com/blog/2014/02/15/i-kit-web/"/>
     <updated>2014-02-15T12:50:49+08:00</updated>
     <id>http://www.ikitweb.com/blog/2014/02/15/i-kit-web</id>

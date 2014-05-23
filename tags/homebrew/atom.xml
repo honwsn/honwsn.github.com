@@ -1,100 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
 
-<!DOCTYPE html>
-<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
-<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
-<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
-<head>
-  <meta charset="utf-8">
-  <title>在Mac OSX 10.9搭建Github/Octopress博客 - I. KIT. WEB</title>
-  <meta name="author" content="ianwang">
-
-  
-  <meta name="description" content="Octopress需要ruby 1.9.3，而我mac系统安装的ruby是2.1的，此外Octopress还需要bundle安装自己的依赖gem包。一开始我想着直接用mac上ruby2.1，结果在执行gem install bundle时，发现之下的错误： ERROR: While &hellip;">
-  
-
-  <!-- http://t.co/dKP3o1e -->
-  <meta name="HandheldFriendly" content="True">
-  <meta name="MobileOptimized" content="320">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  
-  <link rel="canonical" href="http://www.ikitweb.com/blog/2014/04/11/install-ocotpress-on-mac-and-host-website-on-github">
-  <link href="/favicon.png" rel="icon">
-  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
-  <link href="/atom.xml" rel="alternate" title="I. KIT. WEB" type="application/atom+xml">
-  <script src="/javascripts/modernizr-2.0.js"></script>
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
-  <script src="/javascripts/octopress.js" type="text/javascript"></script>
-  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
-<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
-<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
-
-  
-
-</head>
-
-<body   >
-  <header role="banner"><hgroup>
-  <h1><a href="/">I. KIT. WEB</a></h1>
-  
-    <h2>mobile web tech research</h2>
-  
-</hgroup>
-
-</header>
-  <nav role="navigation"><ul class="subscription" data-subscription="rss">
-  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
-  
-</ul>
-  
-<form action="http://google.com/search" method="get">
-  <fieldset role="search">
-    <input type="hidden" name="q" value="site:www.ikitweb.com" />
-    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
-  </fieldset>
-</form>
-  
-<ul class="main-navigation">
-  <li><a href="/">Blog</a></li>
-  <li><a href="/blog/archives">Archives</a></li>
-</ul>
-
-</nav>
-  <div id="main">
-    <div id="content">
-      <div>
-<article class="hentry" role="article">
-  
-  <header>
+  <title><![CDATA[Tag: homebrew | I. KIT. WEB]]></title>
+  <link href="http://www.ikitweb.com/tags/homebrew/atom.xml" rel="self"/>
+  <link href="http://www.ikitweb.com/"/>
+  <updated>2014-05-23T16:57:53+08:00</updated>
+  <id>http://www.ikitweb.com/</id>
+  <author>
+    <name><![CDATA[ianwang]]></name>
     
-      <h1 class="entry-title">在Mac OSX 10.9搭建Github/Octopress博客</h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
 
   
-
-
-<time datetime="2014-04-11T19:03:24+08:00" pubdate data-updated="true">Apr 11<span>th</span>, 2014</time>
-        
-           | <a href="#disqus_thread"
-             data-disqus-identifier="http://www.ikitweb.com">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-<div class="entry-content"><p><em>Octopress</em>需要<strong>ruby 1.9.3</strong>，而我mac系统安装的ruby是2.1的，此外Octopress还需要bundle安装自己的依赖gem包。一开始我想着直接用mac上ruby2.1，结果在执行<code>gem install bundle</code>时，发现之下的错误：</p>
+  <entry>
+    <title type="html"><![CDATA[在Mac OSX 10.9搭建Github/Octopress博客]]></title>
+    <link href="http://www.ikitweb.com/blog/2014/04/11/install-ocotpress-on-mac-and-host-website-on-github/"/>
+    <updated>2014-04-11T19:03:24+08:00</updated>
+    <id>http://www.ikitweb.com/blog/2014/04/11/install-ocotpress-on-mac-and-host-website-on-github</id>
+    <content type="html"><![CDATA[<p><em>Octopress</em>需要<strong>ruby 1.9.3</strong>，而我mac系统安装的ruby是2.1的，此外Octopress还需要bundle安装自己的依赖gem包。一开始我想着直接用mac上ruby2.1，结果在执行<code>gem install bundle</code>时，发现之下的错误：</p>
 
 <blockquote>
   <p>ERROR:  While executing gem … &gt;(Gem::FilePermissionError)
@@ -170,7 +94,7 @@ rake preview		 //进入预览
 <h3 id="github">六. github建立版本仓库</h3>
 <p>在<a href="www.github.com">github</a>注册登录之后，建立版本仓库，Reposity name必须是username.github.com，这样的格式(username可以是任何名称),这里是<a href="http://blog.csdn.net/jackystudio/article/details/16334861">参考</a></p>
 
-<p><img class="center" src="/images/2014-4/addrepos.png" /></p>
+<p><img class="center" src="/images/2014-4/addrepos.png"></p>
 
 <h3 id="gitgithub">七. git与github打通</h3>
 
@@ -186,16 +110,16 @@ rake preview		 //进入预览
   </li>
 </ol>
 
-<p><img class="center" src="/images/2014-4/sshkeygen.png" width="700" height="300" /></p>
+<p><img class="center" src="/images/2014-4/sshkeygen.png" width="700" height="300"></p>
 
 <p>结果在～/.ssh下,id_rsa.pub就是公钥
-<img class="center" src="/images/2014-4/idrsa_pub.png" /></p>
+<img class="center" src="/images/2014-4/idrsa_pub.png"></p>
 
 <ol>
   <li>
     <p>把公钥给github。
 登录github－&gt;右上角accout settings-&gt;SSH keys-&gt;add SSH key.把id_rsa.pub得内容复制粘贴，Title随意。
-<img class="center" src="/images/2014-4/addshhkey.png" /></p>
+<img class="center" src="/images/2014-4/addshhkey.png"></p>
   </li>
   <li>
     <p>客户端验证与github是否打通</p>
@@ -207,7 +131,7 @@ rake preview		 //进入预览
 </blockquote>
 
 <p>我得得到如下结果:
-<img class="center" src="/images/2014-4/ssht.png" /></p>
+<img class="center" src="/images/2014-4/ssht.png"></p>
 
 <h3 id="octopressgithub">八. 把Octopress博客发布到github</h3>
 
@@ -242,7 +166,7 @@ rake preview		 //进入预览
   </li>
 </ol>
 
-<p><img class="center" src="/images/2014-4/setup_github_pages.png" /></p>
+<p><img class="center" src="/images/2014-4/setup_github_pages.png"></p>
 
 <p><strong>发布博客：</strong></p>
 
@@ -281,9 +205,9 @@ git push origin source
 所以才采用git remote add 以及git pull origin source等等。这里由<a href="http://stackoverflow.com/questions/4855561/difference-between-git-remote-add-and-git-clone">stackOverflow的解释</a>。　</p>
 
 <p>下面是我操作过程的截图:
-<img class="center" src="/images/2014-4/cloneblog1.png" />
+<img class="center" src="/images/2014-4/cloneblog1.png">
 还有一点:
-<img class="center" src="/images/2014-4/cloneblog2.png" /></p>
+<img class="center" src="/images/2014-4/cloneblog2.png"></p>
 
 <h3 id="octopress-1">十. Octopress目录分析</h3>
 <p>这个放到下一篇了。。。。先到这里</p>
@@ -300,157 +224,7 @@ Host Your Static Website on Amazon S3</a></li>
   <li><a href="http://www.pcdailytips.com/how-i-install-homebrew-on-mavericks-mac-os/">How I Install Homebrew on Mavericks Mac OS</a></li>
 </ul>
 
-</div>
-
-
-  <footer>
-    <p class="meta">
-      
+]]></content>
+  </entry>
   
-
-<span class="byline author vcard">Posted by <span class="fn">ianwang</span></span>
-
-      
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-04-11T19:03:24+08:00" pubdate data-updated="true">Apr 11<span>th</span>, 2014</time>
-      
-
-<span class="categories">
-  
-    <a class='category' href='/blog/categories/github/'>github</a>, <a class='category' href='/blog/categories/mac/'>mac</a>, <a class='category' href='/blog/categories/octopress/'>octopress</a>
-  
-</span>
-
-
-    </p>
-    
-      <div class="sharing">
-  
-  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://www.ikitweb.com/blog/2014/04/11/install-ocotpress-on-mac-and-host-website-on-github/" data-via="" data-counturl="http://www.ikitweb.com/blog/2014/04/11/install-ocotpress-on-mac-and-host-website-on-github/" >Tweet</a>
-  
-  
-  
-</div>
-
-    
-    <p class="meta">
-      
-        <a class="basic-alignment left" href="/blog/2014/02/15/i-kit-web/" title="Previous Post: Start from I kit web">&laquo; Start from I kit web</a>
-      
-      
-        <a class="basic-alignment right" href="/blog/2014/04/16/about-thread-message-queue-design/" title="Next Post: 关于线程消息队列的设计">关于线程消息队列的设计 &raquo;</a>
-      
-    </p>
-  </footer>
-</article>
-
-  <section>
-    <h1>Comments</h1>
-    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-</div>
-  </section>
-
-</div>
-
-<aside class="sidebar">
-  
-    <section>
-  <h1>Recent Posts</h1>
-  <ul id="recent_posts">
-    
-      <li class="post">
-        <a href="/blog/2014/04/16/about-thread-message-queue-design/">关于线程消息队列的设计</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/04/11/install-ocotpress-on-mac-and-host-website-on-github/">在Mac OSX 10.9搭建Github/Octopress博客</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/02/15/i-kit-web/">Start From I Kit Web</a>
-      </li>
-    
-  </ul>
-</section>
-
-
-
-
-<section>
-  <h1>Tags</h1>
-  <ul class="tag-cloud">
-    <a style="font-size: 90%" href="/tags/octopress/">octopress</a>
-<a style="font-size: 90%" href="/tags/thread/">thread</a>
-<a style="font-size: 90%" href="/tags/rvm/">rvm</a>
-<a style="font-size: 180%" href="/tags/ruby/">ruby</a>
-<a style="font-size: 90%" href="/tags/git/">git</a>
-<a style="font-size: 90%" href="/tags/mac/">mac</a>
-<a style="font-size: 90%" href="/tags/homebrew/">homebrew</a>
-<a style="font-size: 90%" href="/tags/chrome/">chrome</a>
-<a style="font-size: 90%" href="/tags/xcode/">xcode</a>
-<a style="font-size: 147%" href="/tags/webkit/">webkit</a>
-
-  </ul>
-</section>
-  
-</aside>
-
-
-    </div>
-  </div>
-  <footer role="contentinfo"><p>
-  Copyright &copy; 2014 - ianwang -
-  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
-</p>
-
-</footer>
-  
-
-<script type="text/javascript">
-      var disqus_shortname = 'ikitweb';
-      
-        
-        // var disqus_developer = 1;
-        var disqus_identifier = 'http://www.ikitweb.com/blog/2014/04/11/install-ocotpress-on-mac-and-host-website-on-github/';
-        var disqus_url = 'http://www.ikitweb.com/blog/2014/04/11/install-ocotpress-on-mac-and-host-website-on-github/';
-        var disqus_script = 'embed.js';
-      
-    (function () {
-      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
-      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-    }());
-</script>
-
-
-
-
-
-
-
-  <script type="text/javascript">
-    (function(){
-      var twitterWidgets = document.createElement('script');
-      twitterWidgets.type = 'text/javascript';
-      twitterWidgets.async = true;
-      twitterWidgets.src = '//platform.twitter.com/widgets.js';
-      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
-    })();
-  </script>
-
-
-
-
-
-</body>
-</html>
+</feed>
