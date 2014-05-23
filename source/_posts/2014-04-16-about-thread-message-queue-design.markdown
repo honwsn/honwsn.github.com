@@ -21,7 +21,7 @@ categories:
 MessageQueue的实现重要的一点：**要保证对消息队列操作的同步和互斥**.在linux中，就涉及到两个技术点取实现，一个是互斥变量Mute，一个是信号量Condition:
 <!--more-->
 下面是伪代码：
-``` cpp loopThread 	
+{% coderay lang:cplusplus linenos:true %}
 class loopThread:public Thread{
 	public:
 		void addTask(Task * task,bool needSignal);
@@ -67,7 +67,7 @@ class loopThread:public Thread{
     			只能有一个线程进行下面的执行，导致条件发生改变，
     			所以其他线程在接着执行时，任务需要条件判断一次。
     			这就是所谓的“惊群效应”*/
-    			operationsCond.wait（operationsMutex）
+    			operationsCond.wait(operationsMutex)
     		}
     		
     		//2.get a task from queue
@@ -81,12 +81,11 @@ class loopThread:public Thread{
     			currentTask->run();
     		}
     	}
-    }
-```
+    }{% endcoderay %}
 
 ###二. 互斥变量Mutex和条件变量Condition的使用场景
 mutex和condition对象主要是pthread接口的封装，最终调用的POSIX api 如下：
-	
+	{% coderay lang:c %}
 	//1.Mutex   
 	pthread_mutex_init  
 	pthread_mutex_lock  
@@ -98,13 +97,16 @@ mutex和condition对象主要是pthread接口的封装，最终调用的POSIX ap
 	pthread_cond_wait(&conidtion,&mutex);  
 	phtread_cond_timewait	  
 	phtread_cond_signal	
+	{% endcoderay %}
 	
-####1. pthread_cond_wait()的使用过程说明  
+####1. pthread_cond_wait()的使用过程说明
+	{% coderay lang:c %}  
 	pthread_mutex_lock(&mutex);
 	//对临界资源的操作 
 	pthread_cond_wait(&cond, &mutex);
 	//对临界资源的操作 
 	pthread_mutex_unlock(&mutex);
+	{% endcoderay %}
 上面的代码**锁**的变化流程如下 :
 	
 mutex.lock()->**mutext.unlock()-->mutex.lock()**-->mutext.unlock()
@@ -115,7 +117,7 @@ mutex.lock()->**mutext.unlock()-->mutex.lock()**-->mutext.unlock()
 
 ####2. pthread_cond_wait()存在的“惊群效应”  
 当有多个线程处于pthread_cond_wait等同一个cond时，当cond条件满足时，这个多个线程都可能被唤醒，但只有其中一个线程得到了锁（得到下面临界资源的执行权限)，其他线程等待。当该线程执行完毕后，临界资源的执行条件可能发生了改变（例如上述任务队列为空了），此时其他线程要往下执行的话需要再次判断条件，这里就使用了`while`循环。
-	
+	{% coderay lang:c %}
 	pthread_mutex_lock(&mutex);
 	while(临界资源条件不满足){
 	pthread_cond_wait(&cond,&mutex);
@@ -124,7 +126,7 @@ mutex.lock()->**mutext.unlock()-->mutex.lock()**-->mutext.unlock()
 	..对临界资源的操作
 	....
 	phtread_mutext_unlock(&mutex);	
-
+	{% endcoderay %}
 可以参考[这里](http://hi.baidu.com/yangyangye2008/item/454628450f8f7890833ae1a8)
 
 
@@ -135,11 +137,10 @@ mutex.lock()->**mutext.unlock()-->mutex.lock()**-->mutext.unlock()
 在thread线程类接口供外部使用时，建立一个ThreadProxy是一个良好的方式。
 
 
-
 [CCScopedThreadProxy](http://opensource.apple.com/source/WebCore/WebCore-1640.1/platform/graphics/chromium/cc/CCScopedThreadProxy.h)的设计：线程API通过创建一个proxy给外部线程使用，但线程自己可以关闭这个使用。下面可以停止某个外部对象(就是个threadproxy)使用当前的thread。
 `CCScopedThreadProxy::shutdown()`
 
-``` cpp CCScopedThreadProxy.h http://opensource.apple.com/source/WebCore/WebCore-1640.1/platform/graphics/chromium/cc/CCScopedThreadProxy.h 
+{% coderay lang:cplusplus linenos:true CCScopedThreadProxy.h http://opensource.apple.com/source/WebCore/WebCore-1640.1/platform/graphics/chromium/cc/CCScopedThreadProxy.h  linek %} 
 #ifndef CCScopedThreadProxy_h
 #define CCScopedThreadProxy_h
 
@@ -206,7 +207,7 @@ private:
 };
 }
 #endif
-```
+{% endcoderay %}
 	
  
 
