@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Android webkit中的正交投影与glViewPort - I. KIT. WEB</title>
+  <title>Android Webkit渲染中的正交投影与视口变换 - I. KIT. WEB</title>
   <meta name="author" content="ianwang">
 
   
-  <meta name="description" content="这里讨论的是opengGL正交投影矩阵的概念，结合webkit渲染中的应用分析了下对相关接口的认识。 正交投影矩阵与glViewPort视口的关联 andriod4.0以后开启硬件加速，在webkit页面渲染方面，android适配层也有硬件加速的方案，下面的代码就来自android 4.2 &hellip;">
+  <meta name="description" content="这里讨论的是openGL正交投影矩阵的概念，结合webkit渲染中的应用分析了下对相关接口的认识。 正交投影矩阵与glViewPort视口的关联 andriod4.0以后开启硬件加速，在webkit页面渲染方面，android适配层也有硬件加速的方案，下面的代码就来自android 4.2 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -68,7 +68,7 @@
   
   <header>
     
-      <h1 class="entry-title">Android webkit中的正交投影与glViewPort</h1>
+      <h1 class="entry-title">Android Webkit渲染中的正交投影与视口变换</h1>
     
     
       <p class="meta">
@@ -94,13 +94,13 @@
   </header>
 
 
-<div class="entry-content"><p>这里讨论的是opengGL<strong>正交投影矩阵</strong>的概念，结合webkit渲染中的应用分析了下对相关接口的认识。  </p>
+<div class="entry-content"><p>这里讨论的是openGL<strong>正交投影矩阵</strong>的概念，结合webkit渲染中的应用分析了下对相关接口的认识。  </p>
 
 <h3 id="glviewport">正交投影矩阵与glViewPort视口的关联</h3>
 
 <p>andriod4.0以后开启硬件加速，在webkit页面渲染方面，android适配层也有硬件加速的方案，下面的代码就来自android 4.2 webkit 源码android平台在渲染侧的适配。</p>
 
-<p><a href="https://android.googlesource.com/platform/external/webkit/+/e927713a108744aab661abdf0ee4b8d98349a1bd/Source/WebCore/platform/graphics/android/rendering/ShaderProgram.cpp">shaderprogram.cpp</a></p>
+<p><a href="https://android.googlesource.com/platform/external/webkit/+/9b03322/Source/WebCore/platform/graphics/android/rendering/GLUtils.cpp">GLUtils.cpp</a>(打不开，就需要翻墙了，android.googlesource.com)</p>
 
 <div class="bogus-wrapper"><notextile><figure class="code"><div style="overflow-x:auto; overflow-y:hidden;"> <div class="CodeRay">
   <div class="code"><pre>
@@ -127,7 +127,7 @@ ortho.setM43(-(nearZ + farZ) / deltaZ);
 
 <p>上面的参数坐标是窗口坐标,定义了正交投影在窗口中的区域（位置和大小），返回的ortho是建立好的正交投影矩阵，具体公式原理，可以参考<a href="http://blog.csdn.net/popy007/article/details/4126809">这里</a></p>
 
-<p><img class="center" src="/images/2014-5/ortho.png" /></p>
+<p><img class="center" src="/images/2014-5/ortho.png" width="1024" height="122" /></p>
 
 <p>若正交投影坐标矩阵的区域大小若与glViewPort指定的视口大小不一致，则绘制画面就会被拉伸或者缩小。窗口点坐标经过正交矩阵变换后就会被映射到<strong>OpenGL viewport
 坐标系（坐标范围是-1，1）</strong>，但glViewPort指定的窗口区域物理大小与正交投影坐标系指定的窗口区域物理大小不一致（
@@ -137,14 +137,14 @@ GLUtils::setOrthographicMatrix），所以出现上述情况。
 <p>例如下面，我是把ShaderProgram.cpp::setupDrawing,GLUtils::setOrthographicMatrix
 中的高度改成了原来的一半,但glviewport的值没有变动，所以，画面就被拉伸了。</p>
 
-<p><img class="center" src="/images/2014-5/halforthoforviewport.png" /></p>
+<p><img class="center" src="/images/2014-5/halforthoforviewport.png" width="500" height="900" /></p>
 
 <h3 id="glscissorglviewport">glScissor与glViewPort关系</h3>
 
 <p>二者使用的坐标系都是窗口坐标系以窗口左下角为原点</p>
 
 <p>glScissor是对RenderBuffer进行裁剪。超出裁剪区域的不会进行绘制操作。
-  glViewPort是指明RenderBuffer之上的视口大小，这个视口就是后面opengl指令的绘制对象。opengl使用的顶点坐标，坐标系为（-1，1），中间是（0，0），即视口（glViewPort指定）的中间是坐标原点。此外glviewport还定义了openggl坐标到窗口坐标系(使用的像素坐标)的转换，后面将有提到。</p>
+  glViewPort是指明RenderBuffer之上的视口大小，这个视口就是后面opengl指令的绘制对象。opengl使用的顶点坐标，坐标系为（-1，1），中间是（0，0），即视口（glViewPort指定）的中间是坐标原点。此外glviewport还定义了opengl坐标到窗口坐标系(使用的像素坐标)的转换，后面将有提到。</p>
 
 <p>在裁剪方面，glScissor与glViewPort的区域大小应该是相同的，是一种<a href="http://gamedev.stackexchange.com/questions/40704/what-is-the-
 purpose-of-glscissor">互补的关系</a></p>
@@ -227,6 +227,8 @@ winY = (openglY+<span class="integer">1</span>)/<span class="integer">2</span>*G
  </div> </figure></notextile></div>
 
 <p>下面以android 42 webkit 绘制为例，说明下其中的opengl坐标到窗口坐标的转换。</p>
+
+<p><a href="https://android.googlesource.com/platform/external/webkit/+/e927713a108744aab661abdf0ee4b8d98349a1bd/Source/WebCore/platform/graphics/android/rendering/ShaderProgram.cpp">shaderprogram.cpp</a></p>
 
 <p>ShaderProgram::debugMatrixTransform说明一个道理，坐标不一定是存储在顶点rect里面的，有可能是在matrix里面，在opengles里面这样做的好处有两点：</p>
 
@@ -421,7 +423,7 @@ void ShaderProgram::debugMatrixInfo(float currentScale,
   <ul id="recent_posts">
     
       <li class="post">
-        <a href="/blog/2014/05/23/glviewport/">Android webkit中的正交投影与glViewPort</a>
+        <a href="/blog/2014/05/23/glviewport/">Android Webkit渲染中的正交投影与视口变换</a>
       </li>
     
       <li class="post">
@@ -445,16 +447,16 @@ void ShaderProgram::debugMatrixInfo(float currentScale,
 <section>
   <h1>Tags</h1>
   <ul class="tag-cloud">
-    <a style="font-size: 100%" href="/tags/git/">git</a>
-<a style="font-size: 100%" href="/tags/homebrew/">homebrew</a>
-<a style="font-size: 100%" href="/tags/rvm/">rvm</a>
+    <a style="font-size: 100%" href="/tags/mac/">mac</a>
+<a style="font-size: 200%" href="/tags/ruby/">ruby</a>
 <a style="font-size: 100%" href="/tags/glscissor/">glScissor</a>
-<a style="font-size: 100%" href="/tags/mac/">mac</a>
-<a style="font-size: 100%" href="/tags/octopress/">octopress</a>
 <a style="font-size: 200%" href="/tags/webkit/">webkit</a>
-<a style="font-size: 100%" href="/tags/ortho/">ortho</a>
+<a style="font-size: 100%" href="/tags/shaderprogram/">shaderprogram</a>
+<a style="font-size: 100%" href="/tags/xcode/">xcode</a>
 <a style="font-size: 100%" href="/tags/thread/">thread</a>
-<a style="font-size: 100%" href="/tags/glviewport/">glViewPort</a>
+<a style="font-size: 100%" href="/tags/homebrew/">homebrew</a>
+<a style="font-size: 100%" href="/tags/octopress/">octopress</a>
+<a style="font-size: 100%" href="/tags/chrome/">chrome</a>
 
   </ul>
 </section><section>
